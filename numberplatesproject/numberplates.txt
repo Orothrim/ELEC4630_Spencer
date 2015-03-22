@@ -1,0 +1,13 @@
+Number Plates:
+TDR 77H
+YLF 77C
+125 FES
+KWB 46M
+142 ADM
+TPY 32P
+
+Smallest number of Letters:
+T 7 1 M
+
+Pixel size of numberplates
+082 027
