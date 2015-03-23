@@ -7,7 +7,7 @@ KWB 46M
 TPY 32P
 
 Smallest number of Letters:
-T 7 1 M
+T 7 2 M
 
 Pixel size of numberplates
 082 027
