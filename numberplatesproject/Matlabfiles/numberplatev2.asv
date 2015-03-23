@@ -121,7 +121,7 @@ xoffset = xpeak-size(template,2);
 hfig = figure;
 hAx = axes;
 
-%If debug is 1 displays each of the images created
+%If debug is 1 displays each of th
 if debug == 1
     imshow(originalimage, 'Parent', hAx);
     figure, imshow(image1);
