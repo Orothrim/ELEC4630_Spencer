@@ -4,7 +4,7 @@ close all; %close all previous figures
 debug = 1;
 
 %the most effective number plate template so far
-tfilename = 'numberplatetemplate5.jpg'; 
+tfilename = 'numberplatetemplate4.jpg'; 
 
 %Can be used on all images to varying success levels
 filename = input('Please enter the filename to search: ', 's')
@@ -61,25 +61,25 @@ binaryimage = image > thresholdvalue;
 
 %Reads in the template image, converting it into binary at the same time
 template = im2bw(rgb2gray(imread(tfilename)));
-templatesizes = [1.0 0.9 0.8 0.7 0.6 0.5 0.4 0.3];
+%templatesizes = [1.0 0.9 0.8 0.7 0.6 0.5 0.4 0.3];
 
 %Finds the scale of number plate which has the highest peak value to reduce
 %the size of the image again
-for k = 1:8
-    template = im2bw(rgb2gray(imread(tfilename)));
-    template = imresize(template, templatesizes(k));
-    c = normxcorr2(template,binaryimage);
-    resultxcorr(k) = max(c(:));
-end
+%for k = 1:8
+%    template = im2bw(rgb2gray(imread(tfilename)));
+%    template = imresize(template, templatesizes(k));
+%    c = normxcorr2(template,binaryimage);
+%    resultxcorr(k) = max(c(:));
+%end
 
 %Reapplies the template with the highest peak value
-[ymax, xmax] = max(resultxcorr);
+%[ymax, xmax] = max(resultxcorr);
 template = im2bw(rgb2gray(imread(tfilename)));
-template = imresize(template, templatesizes(xmax));
+%template = imresize(template, templatesizes(xmax));
 c = normxcorr2(template,binaryimage);
 
 %Converts the normxcorr2 value into binary for image reduction
-thresholdvalue = 0.18;
+thresholdvalue = 0.25;
 binarycorr = c > thresholdvalue;
 
 %Finds the left-most and right-most successful template values to reduce

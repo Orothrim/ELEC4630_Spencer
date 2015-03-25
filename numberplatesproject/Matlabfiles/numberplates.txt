@@ -6,8 +6,14 @@ KWB 46M
 142 ADM
 TPY 32P
 
+ABCDE FHKLM PRSTW Y1234 567
+
+22 symbols
+
 Smallest number of Letters:
 T 7 2 M
+
+
 
 Pixel size of numberplates
 082 027
