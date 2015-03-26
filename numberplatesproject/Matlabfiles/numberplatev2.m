@@ -1,7 +1,7 @@
 close all; %close all previous figures
 
 %when debug is 0 only the gray image with the locating box is shown
-debug = 1;
+debug = 0;
 
 %the most effective number plate template so far
 tfilename = 'numberplatetemplate4.jpg'; 
@@ -41,36 +41,9 @@ end
 thresholdvalue = 150;
 binaryimage = image > thresholdvalue;
 
-%Fills holes in the binary image in for blob detection, was discarded
-%filledimage = imfill(binaryimage,'holes');
-%figure, imshow(filledimage)
-
-%symbols = [2temp.jpg 7temp.jpg
-
-%for k = 1 : 4
-%    stemplate = im2bw(rgb2gray(imread('2temp.jpg')));
-%    c[k] = normxcorr2(stemplate,binaryimage);
-%    if c[k] > 0.4
-%        [ypeak, xpeak] = find(c==max(c(:)));
-%        yoffset = ypeak-size(stemplate,1);
-%        xoffset = xpeak-size(stemplate,2);
-%end
-%mask = false(size(image)); 
-%mask(ypeak-(size(stemplate,1)*2):ypeak+(size(stemplate,1)*2),xpeak-(size(stemplate,2)*7):xpeak+(size(stemplate,2)*7)) = true; %Creates a mask for the outside rim of the image
-%image(~mask) = 1;
-
 %Reads in the template image, converting it into binary at the same time
 template = im2bw(rgb2gray(imread(tfilename)));
 %templatesizes = [1.0 0.9 0.8 0.7 0.6 0.5 0.4 0.3];
-
-%Finds the scale of number plate which has the highest peak value to reduce
-%the size of the image again
-%for k = 1:8
-%    template = im2bw(rgb2gray(imread(tfilename)));
-%    template = imresize(template, templatesizes(k));
-%    c = normxcorr2(template,binaryimage);
-%    resultxcorr(k) = max(c(:));
-%end
 
 %Reapplies the template with the highest peak value
 %[ymax, xmax] = max(resultxcorr);

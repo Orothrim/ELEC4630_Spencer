@@ -1,0 +1,230 @@
+close all; %close all previous figures
+
+%when debug is 0 only the gray image with the locating box is shown
+debug = 0;
+
+%the most effective number plate template so far
+binarytemplate = 'numberplatetemplate5.jpg';
+
+%Can be used on all images to varying success levels
+filename = input('Please enter the filename to search: ', 's');
+
+templateslist = ['Atemp.jpg'; 'Btemp.jpg'; 'Ctemp.jpg'; 'Dtemp.jpg'; 'Etemp.jpg';...
+    'Ftemp.jpg'; 'Htemp.jpg'; 'Ktemp.jpg'; 'Ltemp.jpg'; 'Mtemp.jpg';...
+    'Ptemp.jpg'; 'Rtemp.jpg'; 'Stemp.jpg'; 'Ttemp.jpg'; 'Wtemp.jpg';...
+    'Ytemp.jpg'; '1temp.jpg'; '2temp.jpg'; '3temp.jpg'; '4temp.jpg';...
+    '5temp.jpg'; '6temp.jpg'; '7temp.jpg'];
+
+symbolsfound = 0;
+peakthreshold = 0.8;
+lettersfound = [0 0 0 0 0 0];
+letterpositions = [0 0 0 0 0 0; 0 0 0 0 0 0];
+symresultxcorr = [0 0; 0 0; 0 0; 0 0; 0 0; 0 0];
+binarypeak = [0 0; 0 0; 0 0; 0 0; 0 0; 0 0];
+successfulsize = 0;
+
+%Checks if the image is grayscale before trying to convert it
+if size(imread(filename),3) == 3
+    originalimage = rgb2gray(imread(filename));
+elseif size(imread(filename),3) == 1
+    originalimage = imread(filename);
+end
+
+%%
+
+%Unchanged image for final display
+image = originalimage;
+
+%Creates a border to reduce false positve likelyhood
+bottomrow = round(size(image,1)*5/6);
+toprow = round(size(image,1)/6);
+leftrow = round(size(image,2)/6);
+rightrow = round(size(image,2)*5/6);
+
+%Masks the outside border of the image (as all the images have the number
+%plate within the center 67% of the image
+image = image(toprow:bottomrow,leftrow:rightrow); %Creates a mask for the outside rim of the image
+
+%If debug is 0 this image does not need to be shown at the end in
+%comparison to the original image
+if debug
+    image1 = image;
+end
+
+%%
+
+%Does the same as a binary conversion
+thresholdvalue = 100;
+binaryimage = image > thresholdvalue;
+
+
+%%
+
+%Reads in the template image, converting it into binary at the same time
+templatesizes = [1.0 0.9 0.8 0.7 0.6 0.5];
+resultxcorr = [0 0 0 0 0 0];
+
+%Finds the scale of number plate which has the highest peak value to reduce
+%the size of the image again
+for k = 1:6
+    template = im2bw(rgb2gray(imread(binarytemplate)));
+    template = imresize(template, templatesizes(k));
+    if and(size(image,1) > size(template,1), size(image,2) > size(template,2))
+        binaryresults = normxcorr2(template,binaryimage);
+        resultxcorr(k) = max(binaryresults(:));
+        %Converts the normxcorr2 value into binary for image reduction
+        thresholdvalue = 0.15;
+        binarybwcorr = binaryresults > thresholdvalue;
+
+        %Finds the left-most and right-most successful template values to reduce
+        %the image size
+        
+        binarypeak(k,:) = find(binarypeak==max(binaryresults(:)));
+        
+        [~, leftcolumn] = find(binarybwcorr, 1, 'first');
+        [~, rightcolumn] = find(binarybwcorr, 1, 'last');
+
+        %Finds the top-most successful template value to reduce the image size
+        for i = 1:(size(binarybwcorr,1))
+            if ~isempty(find(binarybwcorr(i,:),1))
+                toprow = i;
+                break
+            end
+        end
+
+        %Finds the bottom-most successful template value to reduce the image size
+        for i = (size(binarybwcorr,1)):1
+            if ~isempty(find(binarybwcorr(i,:),1))
+                bottomrow = i;
+                break
+            end
+        end
+
+        %Performs the secondary image masking to reduce the number of false
+        %positives
+        cimage = image(max(1,round(toprow - (size(template,1)/2))):...
+            min(size(image,1),round(bottomrow + (size(template,1)/2))),...
+            max(1,round(leftcolumn - (size(template,2)/2))):...
+            min(size(image,2),round(rightcolumn + (size(template,2)/2))));
+        
+        symbolsfound = 0;
+        for l = 1:23
+            if symbolsfound < 6
+                symtemplate = im2bw(rgb2gray(imread(templateslist(l,:))));
+                symtemplate = imresize(symtemplate, templatesizes(k));
+                symbinaryresults = normxcorr2(symtemplate,cimage);
+                if max(symbinaryresults(:)) > peakthreshold
+                    symbolsfound = symbolsfound+1;
+                    lettersfound(symbolsfound) = templateslist(l);
+                    symresultxcorr(symbolsfound,:) = find(symbinaryresults==max(symbinaryresults(:)));
+                    break
+                end
+            else
+                sucessfulsize = k;
+                plateid = char(lettersfound);
+                break
+            end
+        end
+    end
+    if symbolsfound > 4
+        break
+    end
+end
+
+
+
+if symbolsfound < 6
+    avg = binarypeak
+    
+    
+    for k = 1:6
+        template = im2bw(rgb2gray(imread(binarytemplate)));
+        template = imresize(template, templatesizes(k));
+        if and(size(image,1) > size(template,1), size(image,2) > size(template,2))
+            binaryresults = normxcorr2(template,binaryimage);
+            resultxcorr(k) = max(binaryresults(:));
+            %Converts the normxcorr2 value into binary for image reduction
+            thresholdvalue = 0.15;
+            binarybwcorr = binaryresults > thresholdvalue;
+
+            %Finds the left-most and right-most successful template values to reduce
+            %the image size
+            [~, leftcolumn] = find(binarybwcorr, 1, 'first');
+            [~, rightcolumn] = find(binarybwcorr, 1, 'last');
+
+            %Finds the top-most successful template value to reduce the image size
+            for i = 1:(size(binarybwcorr,1))
+                if ~isempty(find(binarybwcorr(i,:),1))
+                    toprow = i;
+                    break
+                end
+            end
+
+            %Finds the bottom-most successful template value to reduce the image size
+            for i = (size(binarybwcorr,1)):1
+                if ~isempty(find(binarybwcorr(i,:),1))
+                    bottomrow = i;
+                    break
+                end
+            end
+
+            %Performs the secondary image masking to reduce the number of false
+            %positives
+            cimage2 = image(max(1,round(toprow - (size(template,1)/2))):...
+                min(size(image,1),round(bottomrow + (size(template,1)/2))),...
+                max(1,round(leftcolumn - (size(template,2)/2))):...
+                min(size(image,2),round(rightcolumn + (size(template,2)/2))));
+            figure, imshow(cimage2);
+            symbolsfound = 0;
+            for l = 1:23
+                if symbolsfound < 6
+                    symtemplate = im2bw(rgb2gray(imread(templateslist(l,:))));
+                    symtemplate = imresize(symtemplate, templatesizes(k));
+                    symbinaryresults = normxcorr2(symtemplate,cimage);
+                    if max(symbinaryresults(:)) > peakthreshold
+                        symbolsfound = symbolsfound+1;
+                        lettersfound(symbolsfound) = templateslist(l);
+                        symresultxcorr(symbolsfound,:) = find(symbinaryresults==max(symbinaryresults(:)));
+                        break
+                    end
+                else
+                    sucessfulsize = k;
+                    plateid = char(lettersfound);
+                    break
+                end
+            end
+        end
+        if symbolsfound > 4
+            break
+        end
+    end
+end
+
+disp(plateid);
+
+%Reapplies the template with the highest peak value
+[~, xmax] = max(resultxcorr);
+template = im2bw(rgb2gray(imread(binarytemplate)));
+template = imresize(template, templatesizes(xmax));
+binaryresults = normxcorr2(template,binaryimage);
+
+
+if debug
+    image2 = image;
+end
+
+%%
+
+
+%If debug is 1 displays each of the images created
+if debug
+    imshow(image, 'Parent', hAx);
+    figure, imshow(image1);
+    figure, imshow(image2);
+%    figure, imshow(image3);
+    figure, imshow(template);
+    %imrect(hAx, [xoffset, yoffset, size(template,2), size(template,1)]);
+else
+    imshow(image);
+    %imrect(hAx, [xoffset, yoffset, size(template,2), size(template,1)]);
+end

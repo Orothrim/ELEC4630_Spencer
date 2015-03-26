@@ -1,15 +1,14 @@
 templatesizes = [1.0 0.9 0.8 0.7 0.6 0.5];
 resultxcorr = [0 0 0 0 0 0];
-templateslist = ['Atemp.jpg'; 'Btemp.jpg'; 'Ctemp.jpg'; 'Dtemp.jpg'; 'Etemp.jpg';...
-    'Ftemp.jpg'; 'Htemp.jpg'; 'Ktemp.jpg'; 'Ltemp.jpg'; 'Mtemp.jpg';...
-    'Ptemp.jpg'; 'Rtemp.jpg'; 'Stemp.jpg'; 'Ttemp.jpg'; 'Wtemp.jpg';...
-    'Ytemp.jpg'; '1temp.jpg'; '2temp.jpg'; '3temp.jpg'; '4temp.jpg';...
-    '5temp.jpg'; '6temp.jpg'; '7temp.jpg'];
+templateslist = ['Atemp.jpg', 'Btemp.jpg', 'Ctemp.jpg', 'Dtemp.jpg', 'Etemp.jpg',...
+    'Ftemp.jpg', 'Htemp.jpg', 'Ktemp.jpg', 'Ltemp.jpg', 'Mtemp.jpg',...
+    'Ptemp.jpg', 'Rtemp.jpg', 'Stemp.jpg', 'Ttemp.jpg', 'Wtemp.jpg',...
+    'Ytemp.jpg', '1temp.jpg', '2temp.jpg', '3temp.jpg', '4temp.jpg',...
+    '5temp.jpg', '6temp.jpg', '7temp.jpg'];
 
 symbolsfound = 0;
 peakthreshold = 0.5;
 lettersfound = [0 0 0 0 0 0];
-letterpositions = [0 0 0 0 0 0; 0 0 0 0 0 0];
 
 %Finds the scale of number plate which has the highest peak value to reduce
 %the size of the image again
@@ -22,12 +21,12 @@ for i = 1:23
                 binaryresults = normxcorr2(template,binaryimage);
                 if max(binaryresults(:)) > peakthreshold
                     symbolsfound = symbolsfound+1;
-                    lettersfound(symbolsfound) = templateslist(i)
+                    lettersfound
                     resultxcorr(k) = max(binaryresults(:));
                 end
             end
         end
-    else
+    else 
         break
     end
 end
