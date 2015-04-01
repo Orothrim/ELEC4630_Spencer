@@ -12,7 +12,7 @@ int thres = 100;
 int linelength = 150;
 int linegap = 20;
 
-char writename[25] = "t100min150max20a22b10"; 
+char writename[26] = "t100min150max20a22b10.jpg"; 
 
 void help()
 {
