@@ -5,14 +5,21 @@
 
 #include <iostream>
 
+#define MIN_GRAD 0.3
+#define MAX_GRAD 0.5
+
+//#define START_LOWER 1400
+#define START_UPPER 1300
+
 using namespace cv;
 using namespace std;
 
 int thres = 100;
 int linelength = 150;
 int linegap = 20;
+float xstart, xend, ystart, yend, grad;
 
-char writename[26] = "t100min150max20a22b10.jpg"; 
+char writename[40] = "t100min150max20a22b10.jpg\0"; 
 
 void help()
 {
@@ -25,7 +32,7 @@ int main(int argc, char** argv)
 {
   const char* filename = argc >= 2 ? argv[1] : "taj.jpg";
 
-  Mat originalimage = imread(filename, 0);
+  Mat originalimage = imread(filename);
   if(originalimage.empty())
   {
     help();
@@ -34,46 +41,44 @@ int main(int argc, char** argv)
   }
 
   Mat edgeimage, lineimage;
-  originalimage.convertTo(edgeimage, -1, 2.2, 10);
+  Mat grayimage = imread(filename, 0);
+
+  // originalimage.copyTo(grayimage);
+  // cvtColor( grayimage, grayimage, CV_BGR2GRAY);
+  grayimage.convertTo(edgeimage, -1, 2.2, 10);
   Canny(edgeimage, edgeimage, 50, 200, 3);
   cvtColor(edgeimage, lineimage, CV_GRAY2BGR);
   
 
-  #if 0
-    vector<Vec2f> lines;
-    HoughLines(edgeimage, lines, 1, CV_PI/180, 100, 0, 0 );
+  
+  vector<Vec4i> lines;
+  HoughLinesP(edgeimage, lines, 1, CV_PI/180, thres, linelength, linegap);
+  for( size_t i = 0; i < lines.size(); i++ )
+  {
+    Vec4i l = lines[i];
 
-    for( size_t i = 0; i < lines.size(); i++ )
-    {
-      float rho = lines[i][0], theta = lines[i][1];
-      Point pt1, pt2;
-      double a = cos(theta), b = sin(theta);
-      double x0 = a*rho, y0 = b*rho;
-      pt1.x = cvRound(x0 + 1000*(-b));
-      pt1.y = cvRound(y0 + 1000*(a));
-      pt2.x = cvRound(x0 - 1000*(-b));
-      pt2.y = cvRound(y0 - 1000*(a));
-      line( lineimage, pt1, pt2, Scalar(0,0,255), 3, CV_AA);
+    if (l[1] < l[3]){
+      xstart = l[0];
+      ystart = l[1];
+      xend = l[2];
+      yend = l[3];
+
+      grad = ((yend-ystart)/(xend-xstart));
+
+      if (MIN_GRAD < grad && grad < MAX_GRAD && ystart > START_UPPER) {
+
+        //cout << "\n Line Gradient: "<< grad <<"\n";
+        line( originalimage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
+      }
     }
-  #else
-    vector<Vec4i> lines;
-    HoughLinesP(edgeimage, lines, 1, CV_PI/180, thres, linelength, linegap);
-    for( size_t i = 0; i < lines.size(); i++ )
-    {
-      Vec4i l = lines[i];
-      line( lineimage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
-    }
-  #endif
+  }
+  
+  imwrite(writename, originalimage);
 
-
-  //strcpy(filename, "t%umin%umax%u.jpg\0",thres, linelength, linegap);
-
-  imwrite(writename, lineimage);
-
-  namedWindow("Edge Image", WINDOW_NORMAL);
-  imshow("Edge Image", edgeimage);
+  //namedWindow("Edge Image", WINDOW_NORMAL);
+  //imshow("Edge Image", edgeimage);
   namedWindow("detected lines", WINDOW_NORMAL);
-  imshow("detected lines", lineimage);
+  imshow("detected lines", originalimage);
 
   waitKey();
 
