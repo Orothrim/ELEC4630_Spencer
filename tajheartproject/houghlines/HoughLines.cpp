@@ -2,24 +2,25 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
-
 #include <iostream>
 
 #define MIN_GRAD 0.3
 #define MAX_GRAD 0.5
 
-//#define START_LOWER 1400
+#define END_UPPER 1550
 #define START_UPPER 1300
 
 using namespace cv;
 using namespace std;
 
 int thres = 100;
-int linelength = 150;
+int linelength = 300;
 int linegap = 20;
+float alpha = 2.2;
+int beta = 10;
 float xstart, xend, ystart, yend, grad;
 
-char writename[40] = "t100min150max20a22b10.jpg\0"; 
+char writename[40] = "t100min300max20a22b10v3.jpg\0"; 
 
 void help()
 {
@@ -32,27 +33,27 @@ int main(int argc, char** argv)
 {
   const char* filename = argc >= 2 ? argv[1] : "taj.jpg";
 
-  Mat originalimage = imread(filename);
-  if(originalimage.empty())
+  Mat originalImage = imread(filename);
+  if(originalImage.empty())
   {
     help();
     cout << "can not open " << filename << endl;
     return -1;
   }
 
-  Mat edgeimage, lineimage;
-  Mat grayimage = imread(filename, 0);
+  Mat edgeImage, lineImage, binaryImage, contrastImage;
+  Mat grayImage = imread(filename, 0);
 
-  // originalimage.copyTo(grayimage);
-  // cvtColor( grayimage, grayimage, CV_BGR2GRAY);
-  grayimage.convertTo(edgeimage, -1, 2.2, 10);
-  Canny(edgeimage, edgeimage, 50, 200, 3);
-  cvtColor(edgeimage, lineimage, CV_GRAY2BGR);
+  
+
+  grayImage.convertTo(contrastImage, -1, 2.2, 10);
+  Canny(contrastImage, edgeImage, 50, 200, 3);
+  cvtColor(edgeImage, lineImage, CV_GRAY2BGR);
   
 
   
   vector<Vec4i> lines;
-  HoughLinesP(edgeimage, lines, 1, CV_PI/180, thres, linelength, linegap);
+  HoughLinesP(edgeImage, lines, 1, CV_PI/180, thres, linelength, linegap);
   for( size_t i = 0; i < lines.size(); i++ )
   {
     Vec4i l = lines[i];
@@ -65,20 +66,19 @@ int main(int argc, char** argv)
 
       grad = ((yend-ystart)/(xend-xstart));
 
-      if (MIN_GRAD < grad && grad < MAX_GRAD && ystart > START_UPPER) {
-
-        //cout << "\n Line Gradient: "<< grad <<"\n";
-        line( originalimage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
+      if (MIN_GRAD < grad && grad < MAX_GRAD && ystart > START_UPPER && yend > END_UPPER) {
+        cout << "\n xstart "<< xstart <<" xend "<< xend << " ystart " << ystart << " yend " << yend  <<"\n";
+        line( originalImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
       }
     }
   }
   
-  imwrite(writename, originalimage);
+  imwrite(writename, originalImage);
 
-  //namedWindow("Edge Image", WINDOW_NORMAL);
-  //imshow("Edge Image", edgeimage);
+  namedWindow("Edge Image", WINDOW_NORMAL);
+  imshow("Edge Image", edgeImage);
   namedWindow("detected lines", WINDOW_NORMAL);
-  imshow("detected lines", originalimage);
+  imshow("detected lines", originalImage);
 
   waitKey();
 
