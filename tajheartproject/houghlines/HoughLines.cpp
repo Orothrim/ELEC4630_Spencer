@@ -8,34 +8,37 @@
 #define MAX_GRAD 0.5
 
 #define END_UPPER 1550
-#define START_UPPER 1300
+
+#define Y_RANGE 42
+#define THRES 100
+#define LINELENGHT 150
+#define LINEGAP 20
+#define ALPHA 2.2
+#define BETA 10
+#define Y_CEILING 1300
+
+#define DEBUG 1
+
 
 using namespace cv;
 using namespace std;
 
-int thres = 100;
-int linelength = 300;
-int linegap = 20;
-float alpha = 2.2;
-int beta = 10;
-float xstart, xend, ystart, yend, grad;
+float xStart, xEnd, yStart, yEnd, grad;
+int lineCepts[3], lineGrads[3], yCeiling, yCept, lineCount = 0;
 
-char writename[40] = "t100min300max20a22b10v3.jpg\0"; 
+char writename[40] = "t100min150max20a22b10.jpg\0"; 
 
-void help()
-{
+void help() {
   cout << "\nThis program demonstrates line finding with the Hough transform.\n"
          "Usage:\n"
          "./houghlines <image_name>, Default is pic1.jpg\n" << endl;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   const char* filename = argc >= 2 ? argv[1] : "taj.jpg";
 
   Mat originalImage = imread(filename);
-  if(originalImage.empty())
-  {
+  if(originalImage.empty()) {
     help();
     cout << "can not open " << filename << endl;
     return -1;
@@ -46,32 +49,41 @@ int main(int argc, char** argv)
 
   
 
-  grayImage.convertTo(contrastImage, -1, 2.2, 10);
+  grayImage.convertTo(contrastImage, -1, ALPHA, BETA);
   Canny(contrastImage, edgeImage, 50, 200, 3);
   cvtColor(edgeImage, lineImage, CV_GRAY2BGR);
   
 
   
   vector<Vec4i> lines;
-  HoughLinesP(edgeImage, lines, 1, CV_PI/180, thres, linelength, linegap);
-  for( size_t i = 0; i < lines.size(); i++ )
-  {
+  HoughLinesP(edgeImage, lines, 1, CV_PI/180, THRES, LINELENGHT, LINEGAP);
+  for( size_t i = 0; i < lines.size(); i++ ) {
     Vec4i l = lines[i];
 
     if (l[1] < l[3]){
-      xstart = l[0];
-      ystart = l[1];
-      xend = l[2];
-      yend = l[3];
+      xStart = l[0];
+      yStart = l[1];
+      xEnd = l[2];
+      yEnd = l[3];
 
-      grad = ((yend-ystart)/(xend-xstart));
+      grad = ((yEnd-yStart)/(xEnd-xStart));
+      yCept = -1*xStart*grad + yStart;
 
-      if (MIN_GRAD < grad && grad < MAX_GRAD && ystart > START_UPPER && yend > END_UPPER) {
-        cout << "\n xstart "<< xstart <<" xend "<< xend << " ystart " << ystart << " yend " << yend  <<"\n";
-        line( originalImage, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
+      if (MIN_GRAD < grad && grad < MAX_GRAD) {
+        if (yEnd > END_UPPER) {
+          if (!(yCept > lineCepts[0] - Y_RANGE && yCept < lineCepts[0] + Y_RANGE) && !(yCept > lineCepts[1] - Y_RANGE && yCept < lineCepts[1] + Y_RANGE) && !(yCept > lineCepts[2] - Y_RANGE && yCept < lineCepts[2] + Y_RANGE)){
+            if (DEBUG) {cout << "\n Gradient: "<< grad <<" Y Intercept: "<< yCept <<" yStart: "<< yStart <<"\n";}
+            
+            line( originalImage, Point((Y_CEILING - yCept)/grad, Y_CEILING), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
+            lineCepts[lineCount] = yCept;
+            lineGrads[lineCount] = grad;
+            lineCount++;
+          }
+        }
       }
     }
   }
+  
   
   imwrite(writename, originalImage);
 
