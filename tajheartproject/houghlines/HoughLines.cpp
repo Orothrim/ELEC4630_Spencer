@@ -17,7 +17,7 @@
 #define BETA 10
 #define Y_CEILING 1300
 
-#define DEBUG 1
+#define DEBUG 0
 
 
 using namespace cv;
@@ -87,8 +87,8 @@ int main(int argc, char** argv) {
   
   imwrite(writename, originalImage);
 
-  namedWindow("Edge Image", WINDOW_NORMAL);
-  imshow("Edge Image", edgeImage);
+  //namedWindow("Edge Image", WINDOW_NORMAL);
+  //imshow("Edge Image", edgeImage);
   namedWindow("detected lines", WINDOW_NORMAL);
   imshow("detected lines", originalImage);
 
