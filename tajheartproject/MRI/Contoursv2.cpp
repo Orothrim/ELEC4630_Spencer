@@ -2,29 +2,28 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "iostream"
+#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#define DEBUG 1
-#define SQUARE_SIZE 180
-#define THRESH 60
+#define DEBUG 0
+#define SQUARE_SIZE 200
 
 using namespace cv;
 using namespace std;
 
 Point mousePos;
-Point cropPos, centerPos;
-
+Point cropPos;
 char i;
 int key;
 int largestArea = 0;
 int contourIndex = 0;
-Rect bRect;
 double heartArea;
-int click = 0;
-
+char imageNo[2];
 
 void onMouse(int event, int x, int y, int flags, void* userdata) {
 	//Event that is attached to a mouseclick after "setMouseCallback" occurs.
+
 	if(event == EVENT_LBUTTONDOWN) {
 		mousePos.x = x;
 		mousePos.y = y;
@@ -32,11 +31,11 @@ void onMouse(int event, int x, int y, int flags, void* userdata) {
 }
 
 
-int main(int argc, char** argv) {
+int main(void) {
 
-	//If no argument is given to "./Contours" then MRI1_01.png is used.
-	for(int k = 1; k <= 16; k++) {
+	for(int k = 1; k < 16; k++) {
 
+		destroyAllWindows();
 		string filename = "MRI1_01.png";
 		stringstream convert;
 
@@ -49,7 +48,7 @@ int main(int argc, char** argv) {
 				filename.replace(5,2,convert.str());
 			}			
 		}
-			cout << filename << endl;
+		cout << filename << endl;
 
 		Mat originalImage = imread(filename);
 		if(originalImage.empty()) {
@@ -58,13 +57,13 @@ int main(int argc, char** argv) {
 			cout << "can not open " << filename << endl;
 			return -1;
 		}
-//		if (DEBUG) {cout << "File Loaded\n\r";}
+		if (DEBUG) {cout << "File Loaded\n\r";}
 
 		//cropPos is set to the middle pixel in the image
 		cropPos.x = 292;
 		cropPos.y = 360;
-		centerPos.x = 90;
-		centerPos.y = 90;
+
+		int thres = 80;
 
 		//Creates the image variables used for this project, one is used for each step
 		//to facilitate debugging.
@@ -77,20 +76,17 @@ int main(int argc, char** argv) {
 		RNG rng(12345);
 
 		//Asks for a mouse click to locate the heart, if any character except y or Y 
-	//is supplied it uses the center of the image
-		if(click == 0) {
-			cout << "Would you like to center the search area? [y/n]\n\r";
-			cin >> i;
-			if(i == 'y' || i == 'Y') {
-				namedWindow("Click Image", WINDOW_AUTOSIZE);
-				setMouseCallback("Click Image", onMouse, NULL);
-				imshow("Click Image", image);
-				waitKey(0);
-				destroyWindow("Click Image");
-				if(DEBUG) {cout << mousePos <<"\n\r";}
-				cropPos = mousePos;
-			}
-			else {click = 1;}
+		//is supplied it uses the center of the image
+		cout << "Would you like to center the search area? [y/n]\n\r";
+		cin >> i;
+		if(i == 'y' || i == 'Y') {
+			namedWindow("Click Image", WINDOW_AUTOSIZE);
+			setMouseCallback("Click Image", onMouse, NULL);
+			imshow("Click Image", image);
+			waitKey(0);
+			destroyWindow("Click Image");
+			if(DEBUG) {cout << mousePos <<"\n\r";}
+			cropPos = mousePos;
 		}
 
 		//Crops the main image around the cropPos point
@@ -105,13 +101,13 @@ int main(int argc, char** argv) {
 		croppedImage.convertTo(contrastImage, -1, 2.2, 10);
 
 		//Edge features of the image are detected using the Canny method
-		Canny(contrastImage, edgeImage, THRESH, 2*THRESH, 3);
+		Canny(contrastImage, edgeImage, thres, 2*thres, 3);
 
 		//Blurs the image to reduce the noise in it
-		blur(edgeImage, blurImage, Size(8,8));
+		blur(edgeImage, blurImage, Size(7,7));
 
 		//Only need to print if DEBUG is 1
-		//if (DEBUG) {cout << "Edge Image Created\n\r";}
+		if (DEBUG) {cout << "Edge Image Created\n\r";}
 
 		//Move the blurImage into croppedImage so blurImage won't be affected by findContours
 		// and can be displayed for debugging.
@@ -121,16 +117,12 @@ int main(int argc, char** argv) {
 		findContours(croppedImage, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0,0));
 
 		//Only need to print if DEBUG is 1
-		//if (DEBUG) {cout << "Contours Found\n\r";}
-
+		if (DEBUG) {cout << "Contours Found\n\r";}
 
 		//Go through each contour trying to find the largest area one, which should be the heart after cropping.
-		largestArea = 0;
 		for(int i=0; i<contours.size(); i++) {
 			double area = contourArea(contours[i], false);
-			bRect = boundingRect(contours[i]);
-			if(area > largestArea && bRect.contains(centerPos)) {
-				//cout << bRect << endl;
+			if(area > largestArea) {
 				largestArea = area;
 				contourIndex = i;
 			}
@@ -145,13 +137,12 @@ int main(int argc, char** argv) {
 		resizeWindow("Contours Image", 325, 400);
 		moveWindow("Contours Image", 330, 425);
 
-
 		//Finds the appropriate area and prints it.
 		heartArea = contourArea(contours[contourIndex], false);
 		cout << "The heart is " << heartArea << " pixels in area.\n\r";
 		//These are only shown when debugging.
 		if(DEBUG) {
-			//cout << "Contours Drawn\n\r";
+			cout << "Contours Drawn\n\r";
 			namedWindow("Original Image", WINDOW_NORMAL);
 			imshow("Original Image", originalImage);
 			resizeWindow("Original Image", 325, 400);
@@ -167,7 +158,6 @@ int main(int argc, char** argv) {
 			resizeWindow("Blur Image", 325, 400);
 			moveWindow("Blur Image", 0, 425);
 		}
-		waitKey(0);
-		destroyAllWindows();
 	}
+	waitKey(0);
 }
