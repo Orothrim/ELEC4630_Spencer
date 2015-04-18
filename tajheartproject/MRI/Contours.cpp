@@ -68,9 +68,13 @@ int main(int argc, char** argv) {
 
 		//Creates the image variables used for this project, one is used for each step
 		//to facilitate debugging.
-		Mat image = originalImage.clone(), pyr;
-		Mat edgeImage, contrastImage, blurImage, binaryImage, contourImage, croppedImage;
+		Mat image = originalImage.clone(), pyr, croppedImage, drawnImage, erodedImage, stepImage;
+		Mat edgeImage, contrastImage, blurImage, binaryImage, contourImage, borderImage, rotatedImage;
+		Mat rot_mat(2, 3, CV_32FC1);
+		Mat kernel = Mat::ones(3, 3, CV_8U);
 		Scalar color = Scalar(255, 0, 0);
+		uchar* p;
+		uchar* q;
 
 		vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
@@ -96,7 +100,7 @@ int main(int argc, char** argv) {
 		//Crops the main image around the cropPos point
 		croppedImage = image(Rect((cropPos.x-(SQUARE_SIZE*0.5)), (cropPos.y-(SQUARE_SIZE*0.5)), SQUARE_SIZE, SQUARE_SIZE));
 
-		Mat drawnImage = Mat::zeros(croppedImage.size(), CV_8UC3);
+		cvtColor(croppedImage, drawnImage, CV_BGR2GRAY);
 
 		//Scales the image down to half it's size then back up, the purpose of this is 
 		//to get rid of some of the noise in the image.  Similarly to a blur technique
@@ -111,37 +115,11 @@ int main(int argc, char** argv) {
 		blur(edgeImage, blurImage, Size(8,8));
 
 		//Only need to print if DEBUG is 1
-		//if (DEBUG) {cout << "Edge Image Created\n\r";}
 
 		//Move the blurImage into croppedImage so blurImage won't be affected by findContours
 		// and can be displayed for debugging.
 		contrastImage = blurImage.clone();
 
-		//Finds any contours in the image, neglecting any holes in the contours.
-		// findContours(contrastImage, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0,0));
-
-		//Only need to print if DEBUG is 1
-		//if (DEBUG) {cout << "Contours Found\n\r";}
-
-
-		//Go through each contour trying to find the largest area one, which should be the heart after cropping.
-		// largestArea = 0;
-		// for(int i=0; i<contours.size(); i++) {
-			
-		// 	drawContours(croppedImage, contours, i, color, 1, 8, hierarchy);
-
-		// 	// double area = contourArea(contours[i], false);
-		// 	// bRect = boundingRect(contours[i]);
-		// 	// if(area > largestArea && bRect.contains(centerPos)) {
-		// 	// 	//cout << bRect << endl;
-		// 	// 	largestArea = area;
-		// 	// 	contourIndex = i;
-		// 	// }
-		// }
-
-		// Mat mask = Mat::ones(image.rows+2, image.cols+2, CV_8U);
-
-    uchar* p;
     for( int i = 0; i < blurImage.cols; ++i)
     {
       p = blurImage.ptr<uchar>(i);
@@ -165,10 +143,8 @@ int main(int argc, char** argv) {
 		resizeWindow("Filled Image", 325, 400);
 		moveWindow("Filled Image", 330, 0);
 
-		Mat rot_mat( 2, 3, CV_32FC1 );
 		rot_mat = getRotationMatrix2D( Point(blurImage.cols/2, blurImage.rows/2), 90, 1);
 
-		Mat rotatedImage;
 		warpAffine(blurImage, rotatedImage, rot_mat, blurImage.size());
 
 		for( int i = 0; i < rotatedImage.cols; ++i)
@@ -179,20 +155,7 @@ int main(int argc, char** argv) {
 				if (!(p[j] == 127)) {
 					p[j] = 255;
 				}
-			}
-		}
-
-		// namedWindow("Rotated Image", WINDOW_NORMAL);
-		// imshow("Rotated Image", rotatedImage);
-		// resizeWindow("Rotated Image", 325, 400);
-		// moveWindow("Rotated Image", 0, 425);
-
-		for( int i = 0; i < rotatedImage.cols; ++i)
-		{
-			p = rotatedImage.ptr<uchar>(i);
-			for (int j = 0; j < rotatedImage.rows; ++j)
-			{
-				if (p[j] == 127) {
+				else {
 					p[j] = 0;
 				}
 			}
@@ -203,47 +166,45 @@ int main(int argc, char** argv) {
 		resizeWindow("Rotated Image", 325, 400);
 		moveWindow("Rotated Image", 0, 425);
 
-
 		rot_mat = getRotationMatrix2D( Point(blurImage.cols/2, blurImage.rows/2), -90, 1);
 		warpAffine(rotatedImage, blurImage, rot_mat, blurImage.size());
 
+		erode(blurImage, erodedImage, kernel);
+		borderImage = blurImage - erodedImage;
 
-
-		Mat src = blurImage;
-		// if (!src.data)
-		// 	return;
-
-		Mat kernel = Mat::ones(3, 3, CV_8U);
-		Mat eroded;
-		erode(src, eroded, kernel);
-		Mat dst = src - eroded;
-
-		floodFill(dst, Point(100,100), Scalar(127), 0, Scalar(), Scalar(), 4);
+		floodFill(borderImage, Point(100,100), Scalar(127), 0, Scalar(), Scalar(), 4);
 		heartArea = 0;
 
-		for( int i = 0; i < dst.cols; ++i)
+		for( int i = 0; i < borderImage.cols; ++i)
 		{
-			p = dst.ptr<uchar>(i);
-			for (int j = 0; j < dst.rows; ++j)
+			p = borderImage.ptr<uchar>(i);
+			for (int j = 0; j < borderImage.rows; ++j)
 			{
 				if (p[j] == 127) {
 					heartArea++;
 				}
 			}
 		}
-
-		//Use blue for the largest area contour, then draw it.
 		
-		// drawContours(drawnImage, contours, contourIndex, color, CV_FILLED, 8, hierarchy);
+		for( int i = 0; i < borderImage.cols; ++i)
+		{
+			p = borderImage.ptr<uchar>(i);
+			q = drawnImage.ptr<uchar>(i);
+			for (int j = 0; j < borderImage.rows; ++j)
+			{
+				if (p[j] == 255) {
+					q[j] = 255;
+				}
+			}
+		}
 
 		namedWindow("Contours Image", WINDOW_NORMAL);
-		imshow("Contours Image", dst);
+		imshow("Contours Image", drawnImage);
 		resizeWindow("Contours Image", 325, 400);
 		moveWindow("Contours Image", 330, 425);
 
 
 		//Finds the appropriate area and prints it.
-		// heartArea = contourArea(contours[contourIndex], false);
 		cout << "The heart is " << heartArea << " pixels in area.\n\r";
 		//These are only shown when debugging.
 		if(DEBUG) {
