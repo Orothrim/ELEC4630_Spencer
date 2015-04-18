@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project( minarea )
+find_package( OpenCV REQUIRED )
+add_executable( minarea minarea.cpp )
+target_link_libraries( minarea ${OpenCV_LIBS} )

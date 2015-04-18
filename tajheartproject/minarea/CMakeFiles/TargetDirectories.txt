@@ -1,0 +1,1 @@
+/home/swift/code/ELEC4630_Spencer/tajheartproject/minarea/CMakeFiles/minarea.dir

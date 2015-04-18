@@ -1,135 +1,134 @@
+/**
+ * @file HoughLines_Demo.cpp
+ * @brief Demo code for Hough Transform
+ * @author OpenCV team
+ */
+
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
 #include <iostream>
 
-#define MIN_GRAD 0.3
-#define MAX_GRAD 0.5
-
-#define END_UPPER 1550
-
-#define Y_RANGE 42
-#define THRES 100
-#define LINELENGHT 150
-#define LINEGAP 20
-#define ALPHA 2.2
-#define BETA 10
-#define Y_CEILING 1300
-
-#define DEBUG 1
-
-
 using namespace cv;
 using namespace std;
 
-float xStart, xEnd, yStart, yEnd, grad;
-int lineCepts[3], lineGrads[3], yCeiling, yCept, lineCount = 0;
+/// Global variables
 
-char writename[40] = "t100min150max20a22b10.jpg\0"; 
+/** General variables */
+Mat src, edges;
+Mat src_gray;
+Mat standard_hough, probabilistic_hough;
+int min_threshold = 50;
+int max_trackbar = 150;
 
-void help() {
-  cout << "\nThis program demonstrates line finding with the Hough transform.\n"
-         "Usage:\n"
-         "./houghlines <image_name>, Default is pic1.jpg\n" << endl;
+const char* standard_name = "Standard Hough Lines Demo";
+const char* probabilistic_name = "Probabilistic Hough Lines Demo";
+
+int s_trackbar = max_trackbar;
+int p_trackbar = max_trackbar;
+
+/// Function Headers
+void help();
+void Standard_Hough( int, void* );
+void Probabilistic_Hough( int, void* );
+
+/**
+ * @function main
+ */
+int main( int, char** argv )
+{
+  /// Read the image
+  src = imread( argv[1], 1 );
+
+  if( src.empty() )
+   { help();
+     return -1;
+   }
+
+  /// Pass the image to gray
+  cvtColor( src, src_gray, COLOR_RGB2GRAY );
+
+  /// Apply Canny edge detector
+  Canny( src_gray, edges, 50, 200, 3 );
+
+  /// Create Trackbars for Thresholds
+  char thresh_label[50];
+  sprintf( thresh_label, "Thres: %d + input", min_threshold );
+
+  namedWindow(standard_name, WINDOW_NORMAL);
+  resizeWindow(standard_name, 1000, 750);
+  moveWindow(standard_name, 1005, 0);
+
+  createTrackbar( thresh_label, standard_name, &s_trackbar, max_trackbar, Standard_Hough);
+
+  namedWindow(probabilistic_name, WINDOW_NORMAL);
+  resizeWindow(probabilistic_name, 1000, 750);
+  moveWindow(probabilistic_name, 1005, 0);
+  createTrackbar( thresh_label, probabilistic_name, &p_trackbar, max_trackbar, Probabilistic_Hough);
+
+  /// Initialize
+  Standard_Hough(0, 0);
+  Probabilistic_Hough(0, 0);
+  waitKey(0);
+  return 0;
 }
 
-int main(int argc, char** argv) {
+/**
+ * @function help
+ * @brief Indications of how to run this program and why is it for
+ */
+void help()
+{
+  printf("\t Hough Transform to detect lines \n ");
+  printf("\t---------------------------------\n ");
+  printf(" Usage: ./HoughLines_Demo <image_name> \n");
+}
 
-  //If no argument is supplied to the program it uses 'taj.jpg'.
-  const char* filename = argc >= 2 ? argv[1] : "taj.jpg";
+/**
+ * @function Standard_Hough
+ */
+void Standard_Hough( int, void* )
+{
+  vector<Vec2f> s_lines;
+  cvtColor( edges, standard_hough, COLOR_GRAY2BGR );
 
-  //Reads in the image, or prints "can not open" and ends the program.
-  Mat originalImage = imread(filename);
-  if(originalImage.empty()) {
-    help();
-    cout << "can not open " << filename << endl;
-    return -1;
-  }
+  /// 1. Use Standard Hough Transform
+  HoughLines( edges, s_lines, 1, CV_PI/180, min_threshold + s_trackbar, 0, 0 );
 
-  //Mat files for holding different versions of the image, for debugging.
-  Mat edgeImage, lineImage, binaryImage, contrastImage;
-  
-  //Reads the image as a grayscale image
-  Mat grayImage = imread(filename, 0);
+  /// Show the result
+  for( size_t i = 0; i < s_lines.size(); i++ )
+     {
+      float r = s_lines[i][0], t = s_lines[i][1];
+      double cos_t = cos(t), sin_t = sin(t);
+      double x0 = r*cos_t, y0 = r*sin_t;
+      double alpha = 1000;
 
-  //Contrasts the grayImage in order to bring the lines out more.
-  grayImage.convertTo(contrastImage, -1, ALPHA, BETA);
+       Point pt1( cvRound(x0 + alpha*(-sin_t)), cvRound(y0 + alpha*cos_t) );
+       Point pt2( cvRound(x0 - alpha*(-sin_t)), cvRound(y0 - alpha*cos_t) );
+       line( standard_hough, pt1, pt2, Scalar(255,0,0), 3, CV_AA);
+     }
 
-  //Performs canny edge detection on the contrasted image.
-  Canny(contrastImage, edgeImage, 50, 200, 3);
+   imshow( standard_name, standard_hough );
+}
 
-  //Turns the image into a form that HoughLinesP can operate on.
-  cvtColor(edgeImage, lineImage, CV_GRAY2BGR);
-  
-  //Vector of 4 value vectors for containing the lines.
-  vector<Vec4i> lines;
+/**
+ * @function Probabilistic_Hough
+ */
+void Probabilistic_Hough( int, void* )
+{
+  vector<Vec4i> p_lines;
+  cvtColor( edges, probabilistic_hough, COLOR_GRAY2BGR );
 
-  //Performs the houghlines transformation on the image, returning the start pixel 
-  //and end pixel of each line.
-  HoughLinesP(edgeImage, lines, 1, CV_PI/180, THRES, LINELENGHT, LINEGAP);
-  
-  //Runs through each of the lines to find ones that suit the requirements for
-  //the project.
-  for( size_t i = 0; i < lines.size(); i++ ) {
-    Vec4i l = lines[i];
+  /// 2. Use Probabilistic Hough Transform
+  HoughLinesP( edges, p_lines, 1, CV_PI/180, min_threshold + p_trackbar, 30, 10 );
 
-    if (l[1] < l[3]){
-      xStart = l[0];
-      yStart = l[1];
-      xEnd = l[2];
-      yEnd = l[3];
+  /// Show the result
+  for( size_t i = 0; i < p_lines.size(); i++ )
+     {
+       Vec4i l = p_lines[i];
+       line( probabilistic_hough, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255,0,0), 3, CV_AA);
+     }
 
-      //Finds the equation of the current line, so as to compare it to the 
-      //required lines.
-      grad = ((yEnd-yStart)/(xEnd-xStart));
-      yCept = -1*xStart*grad + yStart;
-
-      //The gradients of the required 3 lines are very similar, thus if the line
-      //has a very different gradient it is dismissed.
-      if (MIN_GRAD < grad && grad < MAX_GRAD) {
-
-        //We want to find the lowest portion of the line identified by houghlinesP
-        //and then extend the line to a certain height.
-        if (yEnd > END_UPPER) {
-
-          //We don't want overlayed lines, thus any lines with the same/close Y
-          //intercept as a previously selected line gets dismissed.
-          if (!(yCept > lineCepts[0] - Y_RANGE && yCept < lineCepts[0] + Y_RANGE) && 
-            !(yCept > lineCepts[1] - Y_RANGE && yCept < lineCepts[1] + Y_RANGE) && 
-            !(yCept > lineCepts[2] - Y_RANGE && yCept < lineCepts[2] + Y_RANGE)) {
-            
-            //Debugging information, only printed if DEBUG equals 1.
-            if (DEBUG) {cout << "\n Gradient: "<< grad <<" Y Intercept: "<< yCept <<" yStart: "<< yStart <<"\n";}
-            
-            //Draws the line onto the image, extending it to the end of the water feature.
-            line( originalImage, Point((Y_CEILING - yCept)/grad, Y_CEILING), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
-            lineCepts[lineCount] = yCept;
-            lineGrads[lineCount] = grad;
-            lineCount++;
-          }
-        }
-      }
-    }
-  }
-  
-  
-  //imwrite(writename, originalImage);
-
-  if (DEBUG) {
-    namedWindow("Edge Image", WINDOW_NORMAL);
-    imshow("Edge Image", edgeImage);
-    resizeWindow("Edge Image", 1000, 750);
-    moveWindow("Edge Image", 0, 0);
-  }
-
-  namedWindow("Detected Lines", WINDOW_NORMAL);
-  imshow("Detected Lines", originalImage);
-  resizeWindow("Detected Lines", 1000, 750);
-  moveWindow("Detected Lines", 1005, 0);
-
-
-  waitKey();
-
-  return 0;
+   imshow( probabilistic_name, probabilistic_hough );
 }

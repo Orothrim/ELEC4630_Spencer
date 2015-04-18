@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #define DEBUG 1
-#define SQUARE_SIZE 200
+#define SQUARE_SIZE 180
 #define THRESH 60
 
 using namespace cv;
@@ -70,14 +70,14 @@ int main(int argc, char** argv) {
 		//to facilitate debugging.
 		Mat image = originalImage.clone(), pyr;
 		Mat edgeImage, contrastImage, blurImage, binaryImage, contourImage, croppedImage;
-		Scalar color = Scalar(255, 0, 0);
+
 
 		vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
 		RNG rng(12345);
 
 		//Asks for a mouse click to locate the heart, if any character except y or Y 
-	//is supplied it uses the center of the image
+		//is supplied it uses the center of the image
 		if(click == 0) {
 			cout << "Would you like to center the search area? [y/n]\n\r";
 			cin >> i;
@@ -115,153 +115,57 @@ int main(int argc, char** argv) {
 
 		//Move the blurImage into croppedImage so blurImage won't be affected by findContours
 		// and can be displayed for debugging.
-		contrastImage = blurImage.clone();
+		croppedImage = blurImage.clone();
 
 		//Finds any contours in the image, neglecting any holes in the contours.
-		// findContours(contrastImage, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0,0));
+		findContours(croppedImage, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0,0));
 
 		//Only need to print if DEBUG is 1
 		//if (DEBUG) {cout << "Contours Found\n\r";}
 
 
 		//Go through each contour trying to find the largest area one, which should be the heart after cropping.
-		// largestArea = 0;
-		// for(int i=0; i<contours.size(); i++) {
-			
-		// 	drawContours(croppedImage, contours, i, color, 1, 8, hierarchy);
-
-		// 	// double area = contourArea(contours[i], false);
-		// 	// bRect = boundingRect(contours[i]);
-		// 	// if(area > largestArea && bRect.contains(centerPos)) {
-		// 	// 	//cout << bRect << endl;
-		// 	// 	largestArea = area;
-		// 	// 	contourIndex = i;
-		// 	// }
-		// }
-
-		// Mat mask = Mat::ones(image.rows+2, image.cols+2, CV_8U);
-
-    uchar* p;
-    for( int i = 0; i < blurImage.cols; ++i)
-    {
-      p = blurImage.ptr<uchar>(i);
-      for (int j = 0; j < blurImage.rows; ++j)
-      {
-        if (!(p[j] == 0)) {
-        	p[j] = 255;
-        }
-      }
-    }
-
-		namedWindow("White Image", WINDOW_NORMAL);
-		imshow("White Image", blurImage);
-		resizeWindow("White Image", 325, 400);
-		moveWindow("White Image", 0, 0);
-
-		floodFill(blurImage, Point(0,70), Scalar(127), 0, Scalar(), Scalar(), 4);
-
-		namedWindow("Filled Image", WINDOW_NORMAL);
-		imshow("Filled Image", blurImage);
-		resizeWindow("Filled Image", 325, 400);
-		moveWindow("Filled Image", 330, 0);
-
-		Mat rot_mat( 2, 3, CV_32FC1 );
-		rot_mat = getRotationMatrix2D( Point(blurImage.cols/2, blurImage.rows/2), 90, 1);
-
-		Mat rotatedImage;
-		warpAffine(blurImage, rotatedImage, rot_mat, blurImage.size());
-
-		for( int i = 0; i < rotatedImage.cols; ++i)
-		{
-		  p = rotatedImage.ptr<uchar>(i);
-			for (int j = 0; j < rotatedImage.rows; ++j)
-			{
-				if (!(p[j] == 127)) {
-					p[j] = 255;
-				}
-			}
-		}
-
-		// namedWindow("Rotated Image", WINDOW_NORMAL);
-		// imshow("Rotated Image", rotatedImage);
-		// resizeWindow("Rotated Image", 325, 400);
-		// moveWindow("Rotated Image", 0, 425);
-
-		for( int i = 0; i < rotatedImage.cols; ++i)
-		{
-			p = rotatedImage.ptr<uchar>(i);
-			for (int j = 0; j < rotatedImage.rows; ++j)
-			{
-				if (p[j] == 127) {
-					p[j] = 0;
-				}
-			}
-		}
-
-		namedWindow("Rotated Image", WINDOW_NORMAL);
-		imshow("Rotated Image", rotatedImage);
-		resizeWindow("Rotated Image", 325, 400);
-		moveWindow("Rotated Image", 0, 425);
-
-
-		rot_mat = getRotationMatrix2D( Point(blurImage.cols/2, blurImage.rows/2), -90, 1);
-		warpAffine(rotatedImage, blurImage, rot_mat, blurImage.size());
-
-
-
-		Mat src = blurImage;
-		// if (!src.data)
-		// 	return;
-
-		Mat kernel = Mat::ones(3, 3, CV_8U);
-		Mat eroded;
-		erode(src, eroded, kernel);
-		Mat dst = src - eroded;
-
-		floodFill(dst, Point(100,100), Scalar(127), 0, Scalar(), Scalar(), 4);
-		heartArea = 0;
-
-		for( int i = 0; i < dst.cols; ++i)
-		{
-			p = dst.ptr<uchar>(i);
-			for (int j = 0; j < dst.rows; ++j)
-			{
-				if (p[j] == 127) {
-					heartArea++;
-				}
+		largestArea = 0;
+		for(int i=0; i<contours.size(); i++) {
+			double area = contourArea(contours[i], false);
+			bRect = boundingRect(contours[i]);
+			if(area > largestArea && bRect.contains(centerPos)) {
+				//cout << bRect << endl;
+				largestArea = area;
+				contourIndex = i;
 			}
 		}
 
 		//Use blue for the largest area contour, then draw it.
-		
-		// drawContours(drawnImage, contours, contourIndex, color, CV_FILLED, 8, hierarchy);
+		Scalar color = Scalar(255, 0, 0);
+		drawContours(drawnImage, contours, contourIndex, color, CV_FILLED, 8, hierarchy);
 
 		namedWindow("Contours Image", WINDOW_NORMAL);
-		imshow("Contours Image", dst);
+		imshow("Contours Image", drawnImage);
 		resizeWindow("Contours Image", 325, 400);
 		moveWindow("Contours Image", 330, 425);
 
 
 		//Finds the appropriate area and prints it.
-		// heartArea = contourArea(contours[contourIndex], false);
+		heartArea = contourArea(contours[contourIndex], false);
 		cout << "The heart is " << heartArea << " pixels in area.\n\r";
 		//These are only shown when debugging.
 		if(DEBUG) {
 			//cout << "Contours Drawn\n\r";
-			// namedWindow("Original Image", WINDOW_NORMAL);
-			// imshow("Original Image", originalImage);
-			// resizeWindow("Original Image", 325, 400);
-			// moveWindow("Original Image", 0, 0);
+			namedWindow("Original Image", WINDOW_NORMAL);
+			imshow("Original Image", originalImage);
+			resizeWindow("Original Image", 325, 400);
+			moveWindow("Original Image", 0, 0);
 
-			// namedWindow("Edge Image", WINDOW_NORMAL);
-			// imshow("Edge Image", edgeImage);
-			// resizeWindow("Edge Image", 325, 400);
-			// moveWindow("Edge Image", 330, 0);
+			namedWindow("Edge Image", WINDOW_NORMAL);
+			imshow("Edge Image", edgeImage);
+			resizeWindow("Edge Image", 325, 400);
+			moveWindow("Edge Image", 330, 0);
 
-			// namedWindow("Blur Image", WINDOW_NORMAL);
-			// imshow("Blur Image", blurImage);
-			// resizeWindow("Blur Image", 325, 400);
-			// moveWindow("Blur Image", 0, 425);
+			namedWindow("Blur Image", WINDOW_NORMAL);
+			imshow("Blur Image", blurImage);
+			resizeWindow("Blur Image", 325, 400);
+			moveWindow("Blur Image", 0, 425);
 		}
 		waitKey(0);
 		destroyAllWindows();
