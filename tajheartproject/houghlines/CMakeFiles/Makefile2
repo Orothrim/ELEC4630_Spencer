@@ -56,38 +56,38 @@ CMAKE_SOURCE_DIR = /home/swift/code/ELEC4630_Spencer/tajheartproject/houghlines
 CMAKE_BINARY_DIR = /home/swift/code/ELEC4630_Spencer/tajheartproject/houghlines
 
 #=============================================================================
-# Target rules for target CMakeFiles/HoughLines.dir
+# Target rules for target CMakeFiles/HoughLinesP.dir
 
 # All Build rule for target.
-CMakeFiles/HoughLines.dir/all:
-	$(MAKE) -f CMakeFiles/HoughLines.dir/build.make CMakeFiles/HoughLines.dir/depend
-	$(MAKE) -f CMakeFiles/HoughLines.dir/build.make CMakeFiles/HoughLines.dir/build
+CMakeFiles/HoughLinesP.dir/all:
+	$(MAKE) -f CMakeFiles/HoughLinesP.dir/build.make CMakeFiles/HoughLinesP.dir/depend
+	$(MAKE) -f CMakeFiles/HoughLinesP.dir/build.make CMakeFiles/HoughLinesP.dir/build
 	$(CMAKE_COMMAND) -E cmake_progress_report /home/swift/code/ELEC4630_Spencer/tajheartproject/houghlines/CMakeFiles  1
-	@echo "Built target HoughLines"
-.PHONY : CMakeFiles/HoughLines.dir/all
+	@echo "Built target HoughLinesP"
+.PHONY : CMakeFiles/HoughLinesP.dir/all
 
 # Include target in all.
-all: CMakeFiles/HoughLines.dir/all
+all: CMakeFiles/HoughLinesP.dir/all
 .PHONY : all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/HoughLines.dir/rule: cmake_check_build_system
+CMakeFiles/HoughLinesP.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/swift/code/ELEC4630_Spencer/tajheartproject/houghlines/CMakeFiles 1
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/HoughLines.dir/all
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/HoughLinesP.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/swift/code/ELEC4630_Spencer/tajheartproject/houghlines/CMakeFiles 0
-.PHONY : CMakeFiles/HoughLines.dir/rule
+.PHONY : CMakeFiles/HoughLinesP.dir/rule
 
 # Convenience name for target.
-HoughLines: CMakeFiles/HoughLines.dir/rule
-.PHONY : HoughLines
+HoughLinesP: CMakeFiles/HoughLinesP.dir/rule
+.PHONY : HoughLinesP
 
 # clean rule for target.
-CMakeFiles/HoughLines.dir/clean:
-	$(MAKE) -f CMakeFiles/HoughLines.dir/build.make CMakeFiles/HoughLines.dir/clean
-.PHONY : CMakeFiles/HoughLines.dir/clean
+CMakeFiles/HoughLinesP.dir/clean:
+	$(MAKE) -f CMakeFiles/HoughLinesP.dir/build.make CMakeFiles/HoughLinesP.dir/clean
+.PHONY : CMakeFiles/HoughLinesP.dir/clean
 
 # clean rule for target.
-clean: CMakeFiles/HoughLines.dir/clean
+clean: CMakeFiles/HoughLinesP.dir/clean
 .PHONY : clean
 
 #=============================================================================

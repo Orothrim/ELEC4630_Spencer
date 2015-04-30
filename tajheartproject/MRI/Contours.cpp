@@ -4,11 +4,11 @@
 #include "iostream"
 #include <stdio.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 //Cropped area size.
 #define SQUARE_SIZE 200
-#define CROPMIDDLE 100
+#define CROPMIDPOINT 100
 
 //Canny edge detection threshold, it is quite low due to the low 
 //brightness of the images.
@@ -48,9 +48,10 @@ using namespace cv;
 using namespace std;
 
 Point mousePos;
-Point cropPos, centerPos;
+Point cropPos, outerPos;
 
 int i;
+char input;
 double heartArea;
 int click = 0;
 
@@ -95,13 +96,12 @@ int main(int argc, char** argv) {
 		//cropPos is set to the middle pixel in the image
 		cropPos.x = MIDDLEX;
 		cropPos.y = MIDDLEY;
-		centerPos.x = CROPMIDDLE;
-		centerPos.y = CROPMIDDLE;
+		// centerPos.x = CROPMIDPOINT;
+		// centerPos.y = CROPMIDPOINT;
 
 		//Creates the image variables used for this project, one is used for each step
 		//to facilitate debugging and understanding the code.
-		Mat image = originalImage.clone(), reducedImage, croppedImage, drawnImage, erodedImage, stepImage, areaImage;
-		Mat edgeImage, contrastImage, blurImage, binaryImage, contourImage, borderImage;
+		Mat image = originalImage.clone(), reducedImage, croppedImage, drawnImage, erodedImage, stepImage, areaImage, edgeImage, contrastImage, blurImage, binaryImage, contourImage, borderImage, threshImage;
 		Mat rotateMatrix(2, 3, CV_32FC1);
 		Mat kernel = Mat::ones(3, 3, CV_8U);
 
@@ -115,8 +115,9 @@ int main(int argc, char** argv) {
 		//is supplied it uses the center of the image
 		if(click == 0) {
 			cout << "Would you like to center the search area? [y/n]\n\r";
-			cin >> i;
-			if(i == 'y' || i == 'Y') {
+			cin >> input;
+			cout << input << endl;
+			if(input == 'y' || input == 'Y') {
 				namedWindow("Click Image", WINDOW_AUTOSIZE);
 				setMouseCallback("Click Image", onMouse, NULL);
 				imshow("Click Image", image);
@@ -129,18 +130,19 @@ int main(int argc, char** argv) {
 		}
 
 		//Crops the main image around the cropPos point
-		croppedImage = image(Rect((cropPos.x-(SQUARE_SIZE*0.5)), (cropPos.y-(SQUARE_SIZE*0.5)), SQUARE_SIZE, SQUARE_SIZE));
+		//croppedImage = image(Rect((cropPos.x-(SQUARE_SIZE*0.5)), (cropPos.y-(SQUARE_SIZE*0.5)), SQUARE_SIZE, SQUARE_SIZE));
 
 		if (DEBUG) {cout << "Image Cropped\n\r";}
 
 		//Convert image to gray scale, (although it is already gray it is still treated as BGR)
-		cvtColor(croppedImage, drawnImage, CV_BGR2GRAY);
+		cvtColor(image, drawnImage, CV_BGR2GRAY);
 
 		//Scales the image down to half it's size then back up, the purpose of this is 
 		//to get rid of some of the noise in the image.  Similarly to a blur technique
-		pyrDown(croppedImage, reducedImage, Size(croppedImage.cols/2, croppedImage.rows/2));
-		pyrUp(reducedImage, croppedImage, croppedImage.size());
-		croppedImage.convertTo(contrastImage, -1, 2.2, 10);
+		pyrDown(image, reducedImage, Size(image.cols/2, image.rows/2));
+		pyrUp(reducedImage, image, image.size());
+		
+		image.convertTo(contrastImage, -1, 2.2, 10);
 		if (DEBUG) {cout << "First noise reduction performed\n\r";}
 
 		//Edge features of the image are detected using the Canny method
@@ -148,87 +150,37 @@ int main(int argc, char** argv) {
 
 		if (DEBUG) {cout << "Edge detection performed\n\r";}
 
+		// disImage((char *)"Edge Image", edgeImage, 1);
+
 		//Blurs the image to reduce the noise in it
-		blur(edgeImage, blurImage, Size(8,8));
+		blur(edgeImage, blurImage, Size(7,7));
 
 		if (DEBUG) {cout << "Image blurred\n\r";}
 
-		//Set all pixels in the blurred edge image to white if they are not zero.
-		//The purpose of this is to give a clear binary image for further operations.
-		for( int i = 0; i < blurImage.cols; ++i) {
-			p = blurImage.ptr<uchar>(i);
-			for (int j = 0; j < blurImage.rows; ++j) {
-				if (!(p[j] == 0)) {
-					p[j] = WHITE;
-				}
-			}
-		}
+		double radiusOuter = 100; //sqrt(pow(outerPos.x - cropPos.x, 2) + pow(outerPos.y - cropPos.y,2));
+		double sectionAngle = atan((outerPos.y - cropPos.y)/(outerPos.x - cropPos.y));
 
-		if (DEBUG) {cout << "Non-zero pixels set to white\n\r";}
+		vector<vector<Scalar> > nodes;
 
-		//Fill the border around the heart ventricle with a color that isn't in the image
-		//otherwise (MANICOLOUR), this will allow the two borders to be easily identified.
-		floodFill(blurImage, Point(0,70), Scalar(MANICOLOUR), 0, Scalar(), Scalar(), 4);
+		// for (int l = 0; l < NUM_COLUMNS; ++l) {
+		// 	float colAngle = sectionAngle + l*(2*CV_PI/NUM_COLUMNS);
+		// 	for (int j = 0; j < NUM_ROWS; ++ j) {
+		// 		double pixX = (j/40)*(radiusOuter*cos()+cropPos.x);
+		// 		double pixY = (j/40)*(radiusOuter*sin()+cropPos.y);
+		// 		nodes[j][i][0] = blurImage.at<uchar>(round(pixY), round(pixX));
+		// 	}
+		// }
 
-		if (DEBUG) {cout << "Heart border surrounded\n\r";}
+		cout << nodes << endl;
 
-		//Set any pixel that is the MANICOLOUR to black and all other pixels to white, this
-		//is to ensure the borders can easily be picked out of the image.
-		for( int i = 0; i < blurImage.cols; ++i) {
-		  p = blurImage.ptr<uchar>(i);
-			for (int j = 0; j < blurImage.rows; ++j) {
-				if (!(p[j] == MANICOLOUR)) {
-					p[j] = WHITE;
-				}
-				else {
-					p[j] = 0;
-				}
-			}
-		}
+		float weight = 0.8;
 
-		if (DEBUG) {cout << "File Loaded\n\r";}
+		// Canny(blurImage, threshImage, THRESH, 2*THRESH, 3);
+		threshold(blurImage, threshImage, THRESH, 255, THRESH_BINARY);
 
-		//The function erode is used to slightly reduce the size of the white areas in the
-		//image so as to allow a border to be extracted from the image.
-		erode(blurImage, erodedImage, kernel);
-		areaImage = blurImage - erodedImage;
+		//for (int l = 0; l < NUM_ROWS; ++)
 
-		if (DEBUG) {cout << "Borders found\n\r";}
 
-		//Fill the heart with MANICOLOUR so that the area can be counted.
-		floodFill(areaImage, Point(CROPMIDDLE,CROPMIDDLE), Scalar(MANICOLOUR), 0, Scalar(), Scalar(), 4);
-		heartArea = 0;
-
-		if (DEBUG) {cout << "Heart filled\n\r";}
-
-		//Count each instance of MANICOLOUR, to get the heart area.
-		for( int i = 0; i < areaImage.cols; ++i) {
-			p = areaImage.ptr<uchar>(i);
-			for (int j = 0; j < areaImage.rows; ++j) {
-				if (p[j] == MANICOLOUR) {
-					heartArea++;
-				}
-			}
-		}
-
-		//Prints the area of the heart.
-
-		cout << "\nIn image " << filename << " the heart is " << heartArea << " pixels in area.\n\r";
-		
-		if (DEBUG) {cout << "Area counted\n\r";}
-
-		//Draw the borders from the border image onto the original cropped image.
-		for( int i = 0; i < areaImage.cols; ++i) {
-			p = areaImage.ptr<uchar>(i);
-			q = drawnImage.ptr<uchar>(i);
-			for (int j = 0; j < areaImage.rows; ++j) {
-				if (p[j] == WHITE) {
-					q[j] = WHITE;
-				}
-			}
-		}
-
-		if (DEBUG) {cout << "Borders overlaid\n\r";}
 
 		//Display the final product, along with the most important steps.
 		disImage((char *)"Drawn Image", drawnImage, 4);

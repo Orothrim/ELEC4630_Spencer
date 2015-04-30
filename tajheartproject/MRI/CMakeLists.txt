@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project( Contours )
+project( Contoursv4 )
 find_package( OpenCV REQUIRED )
-add_executable( Contours Contours.cpp )
-target_link_libraries( Contours ${OpenCV_LIBS} )
+add_executable( Contoursv4 Contoursv4.cpp )
+target_link_libraries( Contoursv4 ${OpenCV_LIBS} )

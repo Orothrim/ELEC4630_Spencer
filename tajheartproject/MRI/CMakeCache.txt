@@ -116,7 +116,7 @@ CMAKE_OBJCOPY:FILEPATH=/usr/bin/objcopy
 CMAKE_OBJDUMP:FILEPATH=/usr/bin/objdump
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=Contours
+CMAKE_PROJECT_NAME:STATIC=Contoursv4
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
@@ -175,6 +175,18 @@ Contours_BINARY_DIR:STATIC=/home/swift/code/ELEC4630_Spencer/tajheartproject/MRI
 
 //Value Computed by CMake
 Contours_SOURCE_DIR:STATIC=/home/swift/code/ELEC4630_Spencer/tajheartproject/MRI
+
+//Value Computed by CMake
+Contoursv3_BINARY_DIR:STATIC=/home/swift/code/ELEC4630_Spencer/tajheartproject/MRI
+
+//Value Computed by CMake
+Contoursv3_SOURCE_DIR:STATIC=/home/swift/code/ELEC4630_Spencer/tajheartproject/MRI
+
+//Value Computed by CMake
+Contoursv4_BINARY_DIR:STATIC=/home/swift/code/ELEC4630_Spencer/tajheartproject/MRI
+
+//Value Computed by CMake
+Contoursv4_SOURCE_DIR:STATIC=/home/swift/code/ELEC4630_Spencer/tajheartproject/MRI
 
 //Path where debug 3rdpaty OpenCV dependencies are located
 OpenCV_3RDPARTY_LIB_DIR_DBG:PATH=

@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
 		blur(edgeImage, blurImage, Size(8,8));
 
 		//Only need to print if DEBUG is 1
-		//if (DEBUG) {cout << "Edge Image Created\n\r";}
+		if (DEBUG) {cout << "Edge Image Created\n\r";}
 
 		//Move the blurImage into croppedImage so blurImage won't be affected by findContours
 		// and can be displayed for debugging.
@@ -121,8 +121,7 @@ int main(int argc, char** argv) {
 		findContours(croppedImage, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0,0));
 
 		//Only need to print if DEBUG is 1
-		//if (DEBUG) {cout << "Contours Found\n\r";}
-
+		if (DEBUG) {cout << "Contours Found\n\r";}
 
 		//Go through each contour trying to find the largest area one, which should be the heart after cropping.
 		largestArea = 0;

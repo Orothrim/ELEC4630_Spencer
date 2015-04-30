@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project( HoughLines )
+project( HoughLinesP )
 find_package( OpenCV REQUIRED )
-add_executable( HoughLines HoughLines.cpp )
-target_link_libraries( HoughLines ${OpenCV_LIBS} )
+add_executable( HoughLinesP HoughLinesP.cpp )
+target_link_libraries( HoughLinesP ${OpenCV_LIBS} )

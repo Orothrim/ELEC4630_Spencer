@@ -56,38 +56,38 @@ CMAKE_SOURCE_DIR = /home/swift/code/ELEC4630_Spencer/tajheartproject/MRI
 CMAKE_BINARY_DIR = /home/swift/code/ELEC4630_Spencer/tajheartproject/MRI
 
 #=============================================================================
-# Target rules for target CMakeFiles/Contours.dir
+# Target rules for target CMakeFiles/Contoursv4.dir
 
 # All Build rule for target.
-CMakeFiles/Contours.dir/all:
-	$(MAKE) -f CMakeFiles/Contours.dir/build.make CMakeFiles/Contours.dir/depend
-	$(MAKE) -f CMakeFiles/Contours.dir/build.make CMakeFiles/Contours.dir/build
+CMakeFiles/Contoursv4.dir/all:
+	$(MAKE) -f CMakeFiles/Contoursv4.dir/build.make CMakeFiles/Contoursv4.dir/depend
+	$(MAKE) -f CMakeFiles/Contoursv4.dir/build.make CMakeFiles/Contoursv4.dir/build
 	$(CMAKE_COMMAND) -E cmake_progress_report /home/swift/code/ELEC4630_Spencer/tajheartproject/MRI/CMakeFiles  1
-	@echo "Built target Contours"
-.PHONY : CMakeFiles/Contours.dir/all
+	@echo "Built target Contoursv4"
+.PHONY : CMakeFiles/Contoursv4.dir/all
 
 # Include target in all.
-all: CMakeFiles/Contours.dir/all
+all: CMakeFiles/Contoursv4.dir/all
 .PHONY : all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/Contours.dir/rule: cmake_check_build_system
+CMakeFiles/Contoursv4.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/swift/code/ELEC4630_Spencer/tajheartproject/MRI/CMakeFiles 1
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/Contours.dir/all
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/Contoursv4.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/swift/code/ELEC4630_Spencer/tajheartproject/MRI/CMakeFiles 0
-.PHONY : CMakeFiles/Contours.dir/rule
+.PHONY : CMakeFiles/Contoursv4.dir/rule
 
 # Convenience name for target.
-Contours: CMakeFiles/Contours.dir/rule
-.PHONY : Contours
+Contoursv4: CMakeFiles/Contoursv4.dir/rule
+.PHONY : Contoursv4
 
 # clean rule for target.
-CMakeFiles/Contours.dir/clean:
-	$(MAKE) -f CMakeFiles/Contours.dir/build.make CMakeFiles/Contours.dir/clean
-.PHONY : CMakeFiles/Contours.dir/clean
+CMakeFiles/Contoursv4.dir/clean:
+	$(MAKE) -f CMakeFiles/Contoursv4.dir/build.make CMakeFiles/Contoursv4.dir/clean
+.PHONY : CMakeFiles/Contoursv4.dir/clean
 
 # clean rule for target.
-clean: CMakeFiles/Contours.dir/clean
+clean: CMakeFiles/Contoursv4.dir/clean
 .PHONY : clean
 
 #=============================================================================

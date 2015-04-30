@@ -102,41 +102,41 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named HoughLines
+# Target rules for targets named HoughLinesP
 
 # Build rule for target.
-HoughLines: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 HoughLines
-.PHONY : HoughLines
+HoughLinesP: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 HoughLinesP
+.PHONY : HoughLinesP
 
 # fast build rule for target.
-HoughLines/fast:
-	$(MAKE) -f CMakeFiles/HoughLines.dir/build.make CMakeFiles/HoughLines.dir/build
-.PHONY : HoughLines/fast
+HoughLinesP/fast:
+	$(MAKE) -f CMakeFiles/HoughLinesP.dir/build.make CMakeFiles/HoughLinesP.dir/build
+.PHONY : HoughLinesP/fast
 
-HoughLines.o: HoughLines.cpp.o
-.PHONY : HoughLines.o
+HoughLinesP.o: HoughLinesP.cpp.o
+.PHONY : HoughLinesP.o
 
 # target to build an object file
-HoughLines.cpp.o:
-	$(MAKE) -f CMakeFiles/HoughLines.dir/build.make CMakeFiles/HoughLines.dir/HoughLines.cpp.o
-.PHONY : HoughLines.cpp.o
+HoughLinesP.cpp.o:
+	$(MAKE) -f CMakeFiles/HoughLinesP.dir/build.make CMakeFiles/HoughLinesP.dir/HoughLinesP.cpp.o
+.PHONY : HoughLinesP.cpp.o
 
-HoughLines.i: HoughLines.cpp.i
-.PHONY : HoughLines.i
+HoughLinesP.i: HoughLinesP.cpp.i
+.PHONY : HoughLinesP.i
 
 # target to preprocess a source file
-HoughLines.cpp.i:
-	$(MAKE) -f CMakeFiles/HoughLines.dir/build.make CMakeFiles/HoughLines.dir/HoughLines.cpp.i
-.PHONY : HoughLines.cpp.i
+HoughLinesP.cpp.i:
+	$(MAKE) -f CMakeFiles/HoughLinesP.dir/build.make CMakeFiles/HoughLinesP.dir/HoughLinesP.cpp.i
+.PHONY : HoughLinesP.cpp.i
 
-HoughLines.s: HoughLines.cpp.s
-.PHONY : HoughLines.s
+HoughLinesP.s: HoughLinesP.cpp.s
+.PHONY : HoughLinesP.s
 
 # target to generate assembly for a file
-HoughLines.cpp.s:
-	$(MAKE) -f CMakeFiles/HoughLines.dir/build.make CMakeFiles/HoughLines.dir/HoughLines.cpp.s
-.PHONY : HoughLines.cpp.s
+HoughLinesP.cpp.s:
+	$(MAKE) -f CMakeFiles/HoughLinesP.dir/build.make CMakeFiles/HoughLinesP.dir/HoughLinesP.cpp.s
+.PHONY : HoughLinesP.cpp.s
 
 # Help Target
 help:
@@ -144,12 +144,12 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... HoughLines"
+	@echo "... HoughLinesP"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... HoughLines.o"
-	@echo "... HoughLines.i"
-	@echo "... HoughLines.s"
+	@echo "... HoughLinesP.o"
+	@echo "... HoughLinesP.i"
+	@echo "... HoughLinesP.s"
 .PHONY : help
 
 
