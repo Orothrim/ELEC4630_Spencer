@@ -19,8 +19,9 @@
 #define AREA_THRESH 100
 
 #define ELEMENT_TYPE 2
-#define OPENING_SIZE 5
-#define CLOSING_SIZE 3
+#define OPENING_SIZE 1
+#define CLOSING_SIZE 1
+#define CLEANING_SIZE 2
 
 //Used to access all of the images.
 #define ONESCOLUMN 6
@@ -38,18 +39,6 @@
 //Size of the images when displayed.
 #define WINDOWX 533
 #define WINDOWY 400
-//First of four image positions.
-#define FIRSTPOSX 0
-#define FIRSTPOSY 0
-//Second of four image positions.
-#define SECONDPOSX WINDOWX+5
-#define SECONDPOSY 0
-//Third of four image positions.
-#define THIRDPOSX 0
-#define THIRDPOSY WINDOWY+25
-//Fourth of four image positions.
-#define FOURTHPOSX WINDOWX+5
-#define FOURTHPOSY WINDOWY+25
 
 
 using namespace cv;
@@ -58,88 +47,97 @@ using namespace std;
 Point brightLoc, mousePos;
 
 char input;
-int cnt = 0, brightness = 0, contourIndex = 0, intense, diffCount;
+int cnt = 0, brightness = 0, contourIndex = 0, intense, diffCount, eleType;
 
 double largestArea, area;
 
-Mat openElement, closeElement;
+Mat openElement, closeElement, cleanElement;
 Rect bRect;
-Scalar intenseAvg, color[3];
+Scalar intenseAvg, color[3], morphAvg;
 
-vector<vector<Point> > contours;
-vector<Vec4i> hierarchy;
-vector<Vec3f> circles;
 uchar* p;
 uchar* q;
 
-int USB = open( "/dev/rfcomm0", O_RDWR| O_NOCTTY );
 
 //Function Prototypes
 
 void onMouse(int event, int x, int y, int flags, void* userdata);
 void disImage(char* winName, Mat Image, int Position);
-int write(char message[10]);
-Mat opening()
+void thinningIteration(Mat& im, int iter);
+void thinning(Mat& im);
 
 int main(int argc, char** argv) {
 
-	string filename = "String1_1";
-	stringstream select;
+	string filename = "String1_1.jpg";
 
-	select << argc;
-	filename.replace(6,1,select.str());
+		if( ELEMENT_TYPE == 0 ){ eleType = MORPH_RECT; }
+		else if( ELEMENT_TYPE == 1 ){ eleType = MORPH_CROSS; }
+		else if( ELEMENT_TYPE == 2) { eleType = MORPH_ELLIPSE; }
 
-	for(int k = 1; k <= 5; k++) {
+		openElement = getStructuringElement(eleType , Size( 2*OPENING_SIZE + 1, 2*OPENING_SIZE+1 ), Point(OPENING_SIZE, OPENING_SIZE));
+		closeElement = getStructuringElement(eleType , Size( 2*CLOSING_SIZE + 1, 2*CLOSING_SIZE+1 ), Point(CLOSING_SIZE, CLOSING_SIZE));
+		cleanElement = getStructuringElement(eleType , Size( 2*CLEANING_SIZE + 1, 2*CLEANING_SIZE+1 ), Point(CLEANING_SIZE, CLEANING_SIZE));
+
+	for(int i = 1; i <= 3; i++) {
+
+		stringstream first;
+
+		first << i;
+		filename.replace(6,1,first.str());
+
+		for(int k = 1; k <= 5; k++) {
+
+			stringstream second;
+
+			second << k;
+			filename.replace(8,1,second.str());
+			
+			cout << filename << endl;
+
+			Mat originalImage = imread(filename, 0);
+			if(originalImage.empty()) {
+				//Checks that the file can be opened, if it can't, prings "can not open" 
+				//and end the program
+				cout << "can not open " << filename << endl;
+				return -1;
+			}
+			if (DEBUG) {cout << "File Loaded\n\r";}
 
 
-		stringstream convert;
+			//Creates the image variables used for this project, one is used for each step
+			//to facilitate debugging and understanding the code.
+			Mat image = originalImage.clone(), threshImage, erodedImage, resultImage, openImage, closeImage, compareImage, contrastImage, gradImage, dilatedImage, skelImage;
 
-		convert << k;
-		filename.replace(0,1,convert.str());
-		
-		cout << filename << endl;
+			image.convertTo(contrastImage, -1, 1.2, 10);
 
-		Mat originalImage = imread(filename, 0);
-		if(originalImage.empty()) {
-			//Checks that the file can be opened, if it can't, prings "can not open" 
-			//and end the program
-			cout << "can not open " << filename << endl;
-			return -1;
+
+			//Morphological Gradient, created by subtracting the eroded image from the dilated image.
+			erode(contrastImage, erodedImage, openElement);
+			dilate(contrastImage, dilatedImage, openElement);
+			subtract(dilatedImage, erodedImage, gradImage);
+
+			intenseAvg = mean(gradImage);
+			threshold(gradImage, threshImage, intenseAvg[0]*5, 255, THRESH_BINARY);
+
+			dilate(threshImage, dilatedImage, closeElement);
+			erode(dilatedImage, closeImage, closeElement);
+
+			erode(closeImage, erodedImage, openElement);
+			dilate(erodedImage, openImage, openElement);
+
+			skelImage = openImage.clone();
+
+			thinning(skelImage);
+
+			disImage((char *)"Current Image", originalImage, 1);
+			disImage((char *)"Contrast Image", contrastImage, 2);
+			disImage((char *)"Morphological Gradient Image", gradImage, 3);
+			disImage((char *)"Thresh Image", threshImage, 4);
+			disImage((char *)"Opened Image", openImage, 5);
+			disImage((char *)"Skeletonized Image", skelImage, 6);
+
+			waitKey(0);
 		}
-		if (DEBUG) {cout << "File Loaded\n\r";}
-
-		openElement = getStructuringElement(MORPH_ELLIPSE , Size( 2*OPENING_SIZE + 1, 2*OPENING_SIZE+1 ), Point(OPENING_SIZE, OPENING_SIZE));
-		closeElement = getStructuringElement(MORPH_ELLIPSE , Size( 2*CLOSING_SIZE + 1, 2*CLOSING_SIZE+1 ), Point(CLOSING_SIZE, CLOSING_SIZE));
-
-		//Creates the image variables used for this project, one is used for each step
-		//to facilitate debugging and understanding the code.
-		Mat image = originalImage.clone(), threshImage, reducedImage, grayImage, erodedImage, edgeImage, contoursImage, blueImage, greenImage, redImage, resultImage, openImage, compareImage, goalImage;
-
-		intenseAvg = mean(image);
-
-		// grayImage = imread(filename, 0);
-		threshold(image, threshImage, intenseAvg[0], 255, THRESH_BINARY);
-
-		erode(threshImage, erodedImage, openElement);
-		dilate(erodedImage, resultImage, openElement);
-
-		// dilate(openImage, erodedImage, closeElement);
-		// erode(erodedImage, resultImage, closeElement);
-
-		goalImage = imread(maskname, 0);
-
-		bitwise_xor(resultImage, goalImage, compareImage);
-
-		diffCount = countNonZero(compareImage);
-
-		cout << diffCount << endl;
-
-		disImage((char *)"Original Image", originalImage, 1);
-		disImage((char *)"Result Image", resultImage, 2);
-		disImage((char *)"Goal Image", goalImage, 3);
-		disImage((char *)"Compare Image", compareImage, 4);
-
-		waitKey(0);
 	}
 }
 
@@ -147,21 +145,27 @@ void disImage(char* winName, Mat Image, int Position) {
 	namedWindow(winName, WINDOW_NORMAL);
 	imshow(winName, Image);
 	resizeWindow(winName, WINDOWX, WINDOWY);
+
 	switch (Position) {
 		case 1:
-			moveWindow(winName, FIRSTPOSX, FIRSTPOSY);
+			moveWindow(winName, 0, 0);
 			break;
 		case 2:
-			moveWindow(winName, SECONDPOSX, SECONDPOSY);
+			moveWindow(winName, WINDOWX+5, 0);
 			break;
 		case 3:
-			moveWindow(winName, THIRDPOSX, THIRDPOSY);
+			moveWindow(winName, (WINDOWX*2)+10, 0);
 			break;
 		case 4:
-			moveWindow(winName, FOURTHPOSX, FOURTHPOSY);
+			moveWindow(winName, 0, WINDOWY+25);
+			break;
+		case 5:
+			moveWindow(winName, WINDOWX+5, WINDOWY+25);
+			break;
+		case 6:
+			moveWindow(winName, (WINDOWX*2)+10, WINDOWY+25);
 			break;
 	}
-	
 }
 
 void onMouse(int event, int x, int y, int flags, void* userdata) {
@@ -172,42 +176,65 @@ void onMouse(int event, int x, int y, int flags, void* userdata) {
 	}
 }
 
-int write(char message[10]) {
-	int n_written = 0, spot = 0;
-
-	do {
-		n_written = write( USB, &message[spot], 1 );
-		spot += n_written;
-	} while (message[spot-1] != '\r' && n_written > 0);
-}
-
-void Erosion(Mat openImage) {
-  int erosion_type;
-  if( erosion_elem == 0 ){ erosion_type = MORPH_RECT; }
-  else if( erosion_elem == 1 ){ erosion_type = MORPH_CROSS; }
-  else if( erosion_elem == 2) { erosion_type = MORPH_ELLIPSE; }
-
-  Mat element = getStructuringElement( erosion_type,
-                                       Size( 2*erosion_size + 1, 2*erosion_size+1 ),
-                                       Point( erosion_size, erosion_size ) );
-
-  /// Apply the erosion operation
-  erode( src, erosion_dst, element );
-  imshow( "Erosion Demo", erosion_dst );
-}
-
-/** @function Dilation */
-void Dilation( int, void* )
+/**
+ * Perform one thinning iteration.
+ * Normally you wouldn't call this function directly from your code.
+ *
+ * @param  im    Binary image with range = 0-1
+ * @param  iter  0=even, 1=odd
+ */
+void thinningIteration(Mat& im, int iter)
 {
-  int dilation_type;
-  if( dilation_elem == 0 ){ dilation_type = MORPH_RECT; }
-  else if( dilation_elem == 1 ){ dilation_type = MORPH_CROSS; }
-  else if( dilation_elem == 2) { dilation_type = MORPH_ELLIPSE; }
+    Mat marker = Mat::zeros(im.size(), CV_8UC1);
 
-  Mat element = getStructuringElement( dilation_type,
-                                       Size( 2*dilation_size + 1, 2*dilation_size+1 ),
-                                       Point( dilation_size, dilation_size ) );
-  /// Apply the dilation operation
-  dilate( src, dilation_dst, element );
-  imshow( "Dilation Demo", dilation_dst );
+    for (int i = 1; i < im.rows-1; i++)
+    {
+        for (int j = 1; j < im.cols-1; j++)
+        {
+            uchar p2 = im.at<uchar>(i-1, j);
+            uchar p3 = im.at<uchar>(i-1, j+1);
+            uchar p4 = im.at<uchar>(i, j+1);
+            uchar p5 = im.at<uchar>(i+1, j+1);
+            uchar p6 = im.at<uchar>(i+1, j);
+            uchar p7 = im.at<uchar>(i+1, j-1);
+            uchar p8 = im.at<uchar>(i, j-1);
+            uchar p9 = im.at<uchar>(i-1, j-1);
+
+            int A  = (p2 == 0 && p3 == 1) + (p3 == 0 && p4 == 1) + 
+                     (p4 == 0 && p5 == 1) + (p5 == 0 && p6 == 1) + 
+                     (p6 == 0 && p7 == 1) + (p7 == 0 && p8 == 1) +
+                     (p8 == 0 && p9 == 1) + (p9 == 0 && p2 == 1);
+            int B  = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+            int m1 = iter == 0 ? (p2 * p4 * p6) : (p2 * p4 * p8);
+            int m2 = iter == 0 ? (p4 * p6 * p8) : (p2 * p6 * p8);
+
+            if (A == 1 && (B >= 2 && B <= 6) && m1 == 0 && m2 == 0)
+                marker.at<uchar>(i,j) = 1;
+        }
+    }
+
+    im &= ~marker;
+}
+
+/**
+ * Function for thinning the given binary image
+ *
+ * @param  im  Binary image with range = 0-255
+ */
+void thinning(Mat& im)
+{
+    im /= 255;
+
+    Mat prev = Mat::zeros(im.size(), CV_8UC1);
+    Mat diff;
+
+    do {
+        thinningIteration(im, 0);
+        thinningIteration(im, 1);
+        absdiff(im, prev, diff);
+        im.copyTo(prev);
+    } 
+    while (countNonZero(diff) > 0);
+
+    im *= 255;
 }
