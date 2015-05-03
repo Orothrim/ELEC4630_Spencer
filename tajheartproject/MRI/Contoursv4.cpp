@@ -30,19 +30,6 @@
 //Size of the images when displayed.
 #define WINDOWX 325
 #define WINDOWY 400
-//First of four image positions.
-#define FIRSTPOSX 0
-#define FIRSTPOSY 0
-//Second of four image positions.
-#define SECONDPOSX WINDOWX+5
-#define SECONDPOSY 0
-//Third of four image positions.
-#define THIRDPOSX 0
-#define THIRDPOSY WINDOWY+25
-//Fourth of four image positions.
-#define FOURTHPOSX WINDOWX+5
-#define FOURTHPOSY WINDOWY+25
-
 
 using namespace cv;
 using namespace std;
@@ -261,21 +248,27 @@ void disImage(char* winName, Mat Image, int Position) {
 	namedWindow(winName, WINDOW_NORMAL);
 	imshow(winName, Image);
 	resizeWindow(winName, WINDOWX, WINDOWY);
+
 	switch (Position) {
 		case 1:
-			moveWindow(winName, FIRSTPOSX, FIRSTPOSY);
+			moveWindow(winName, 0, 0);
 			break;
 		case 2:
-			moveWindow(winName, SECONDPOSX, SECONDPOSY);
+			moveWindow(winName, WINDOWX+5, 0);
 			break;
 		case 3:
-			moveWindow(winName, THIRDPOSX, THIRDPOSY);
+			moveWindow(winName, (WINDOWX*2)+10, 0);
 			break;
 		case 4:
-			moveWindow(winName, FOURTHPOSX, FOURTHPOSY);
+			moveWindow(winName, 0, WINDOWY+25);
+			break;
+		case 5:
+			moveWindow(winName, WINDOWX+5, WINDOWY+25);
+			break;
+		case 6:
+			moveWindow(winName, (WINDOWX*2)+10, WINDOWY+25);
 			break;
 	}
-	
 }
 
 void onMouse(int event, int x, int y, int flags, void* userdata) {
