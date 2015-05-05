@@ -102,41 +102,41 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named segment
+# Target rules for targets named segmentv1
 
 # Build rule for target.
-segment: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 segment
-.PHONY : segment
+segmentv1: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 segmentv1
+.PHONY : segmentv1
 
 # fast build rule for target.
-segment/fast:
-	$(MAKE) -f CMakeFiles/segment.dir/build.make CMakeFiles/segment.dir/build
-.PHONY : segment/fast
+segmentv1/fast:
+	$(MAKE) -f CMakeFiles/segmentv1.dir/build.make CMakeFiles/segmentv1.dir/build
+.PHONY : segmentv1/fast
 
-segment.o: segment.cpp.o
-.PHONY : segment.o
+segmentv1.o: segmentv1.cpp.o
+.PHONY : segmentv1.o
 
 # target to build an object file
-segment.cpp.o:
-	$(MAKE) -f CMakeFiles/segment.dir/build.make CMakeFiles/segment.dir/segment.cpp.o
-.PHONY : segment.cpp.o
+segmentv1.cpp.o:
+	$(MAKE) -f CMakeFiles/segmentv1.dir/build.make CMakeFiles/segmentv1.dir/segmentv1.cpp.o
+.PHONY : segmentv1.cpp.o
 
-segment.i: segment.cpp.i
-.PHONY : segment.i
+segmentv1.i: segmentv1.cpp.i
+.PHONY : segmentv1.i
 
 # target to preprocess a source file
-segment.cpp.i:
-	$(MAKE) -f CMakeFiles/segment.dir/build.make CMakeFiles/segment.dir/segment.cpp.i
-.PHONY : segment.cpp.i
+segmentv1.cpp.i:
+	$(MAKE) -f CMakeFiles/segmentv1.dir/build.make CMakeFiles/segmentv1.dir/segmentv1.cpp.i
+.PHONY : segmentv1.cpp.i
 
-segment.s: segment.cpp.s
-.PHONY : segment.s
+segmentv1.s: segmentv1.cpp.s
+.PHONY : segmentv1.s
 
 # target to generate assembly for a file
-segment.cpp.s:
-	$(MAKE) -f CMakeFiles/segment.dir/build.make CMakeFiles/segment.dir/segment.cpp.s
-.PHONY : segment.cpp.s
+segmentv1.cpp.s:
+	$(MAKE) -f CMakeFiles/segmentv1.dir/build.make CMakeFiles/segmentv1.dir/segmentv1.cpp.s
+.PHONY : segmentv1.cpp.s
 
 # Help Target
 help:
@@ -146,10 +146,10 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... segment"
-	@echo "... segment.o"
-	@echo "... segment.i"
-	@echo "... segment.s"
+	@echo "... segmentv1"
+	@echo "... segmentv1.o"
+	@echo "... segmentv1.i"
+	@echo "... segmentv1.s"
 .PHONY : help
 
 

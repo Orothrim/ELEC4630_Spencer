@@ -116,7 +116,7 @@ CMAKE_OBJCOPY:FILEPATH=/usr/bin/objcopy
 CMAKE_OBJDUMP:FILEPATH=/usr/bin/objdump
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=segment
+CMAKE_PROJECT_NAME:STATIC=segmentv1
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
@@ -192,6 +192,12 @@ segment_BINARY_DIR:STATIC=/home/swift/code/ELEC4630_Spencer/segment/HEP-2 segmen
 
 //Value Computed by CMake
 segment_SOURCE_DIR:STATIC=/home/swift/code/ELEC4630_Spencer/segment/HEP-2 segmentation
+
+//Value Computed by CMake
+segmentv1_BINARY_DIR:STATIC=/home/swift/code/ELEC4630_Spencer/segment/HEP-2 segmentation
+
+//Value Computed by CMake
+segmentv1_SOURCE_DIR:STATIC=/home/swift/code/ELEC4630_Spencer/segment/HEP-2 segmentation
 
 
 ########################

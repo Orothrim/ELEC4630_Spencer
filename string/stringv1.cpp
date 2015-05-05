@@ -1,8 +1,10 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include <opencv2/video/background_segm.hpp>
 #include "iostream"
 #include <stdio.h>
+#include <sstream>
 #include <unistd.h>     // UNIX standard function definitions
 #include <fcntl.h>      // File control definitions
 #include <errno.h>      // Error number definitions
@@ -31,14 +33,14 @@
 
 //Pixel to mm ratio
 #define RATIO 1.13139
-#define ROOT2 1.41421356237
+
 
 using namespace cv;
 using namespace std;
 
 char input;
-int eleType; 
-double stringLengths[5], stringLength, pixelLengths[15];
+int eleType, pixelLengths[15]; 
+double stringLengths[5], stringLength;
 
 double largestArea, area;
 
@@ -101,23 +103,19 @@ int main(int argc, char** argv) {
 
 			//Creates the image variables used for this project, one is used for each step
 			//to facilitate debugging and understanding the code.
-			Mat image = originalImage.clone(), threshImage, erodedImage, resultImage, openImage, closeImage, compareImage, contrastImage, gradImage, dilatedImage, skelImage, countImage;
-			Mat countArray = (Mat_<double>(3,3) << ROOT2, 1, ROOT2, 1, 0, 1, ROOT2, 1, ROOT2);
+			Mat image = originalImage.clone(), threshImage, erodedImage, resultImage, openImage, closeImage, compareImage, contrastImage, gradImage, dilatedImage, skelImage;
 
 			if (DEBUG) {cout << "Variables Created\n\r";}
 
 			//Contrasts and brightens the image.
-			// image.convertTo(contrastImage, -1, 1.5, 10);
-			equalizeHist(image, contrastImage);
+			image.convertTo(contrastImage, -1, 1.5, 10);
 
 			if (DEBUG) {cout << "Contrast Performed\n\r";}
 
 			//Morphological Gradient, created by subtracting the eroded image from the dilated image.
-			// erode(contrastImage, erodedImage, openElement);
-			// dilate(contrastImage, dilatedImage, openElement);
-			// subtract(dilatedImage, erodedImage, gradImage);
-
-
+			erode(contrastImage, erodedImage, openElement);
+			dilate(contrastImage, dilatedImage, openElement);
+			subtract(dilatedImage, erodedImage, gradImage);
 
 			if (DEBUG) {cout << "Morphological Gradient Image Created\n\r";}
 
@@ -146,25 +144,7 @@ int main(int argc, char** argv) {
 			if (DEBUG) {cout << "Skeletonization Performed\n\r";}
 
 			//Counts the white pixels remaining in the image
-			// pixelLengths[(5*i)+k-6] = countNonZero(skelImage);
-
-			skelImage /= 255;
-
-			for(int j = 1; j < myImage.rows - 1; ++j)
-			{
-				const uchar* previous = myImage.ptr<uchar>(j - 1);
-				const uchar* current  = myImage.ptr<uchar>(j    );
-				const uchar* next     = myImage.ptr<uchar>(j + 1);
-
-				// uchar* output = Result.ptr<uchar>(j);
-
-				for(int l = nChannels; l < nChannels * (myImage.cols - 1); ++l)
-				{
-					if (!(p[j] == 0)) {
-						pixelLengths[(5*i)+k-6]
-					}
-				}
-			}
+			pixelLengths[(5*i)+k-6] = countNonZero(skelImage);
 			stringLengths[k-1] = pixelLengths[(5*i)+k-6];
 
 			stringLengths[k-1] = RATIO*stringLengths[k-1];

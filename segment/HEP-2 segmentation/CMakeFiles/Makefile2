@@ -56,38 +56,38 @@ CMAKE_SOURCE_DIR = "/home/swift/code/ELEC4630_Spencer/segment/HEP-2 segmentation
 CMAKE_BINARY_DIR = "/home/swift/code/ELEC4630_Spencer/segment/HEP-2 segmentation"
 
 #=============================================================================
-# Target rules for target CMakeFiles/segment.dir
+# Target rules for target CMakeFiles/segmentv1.dir
 
 # All Build rule for target.
-CMakeFiles/segment.dir/all:
-	$(MAKE) -f CMakeFiles/segment.dir/build.make CMakeFiles/segment.dir/depend
-	$(MAKE) -f CMakeFiles/segment.dir/build.make CMakeFiles/segment.dir/build
+CMakeFiles/segmentv1.dir/all:
+	$(MAKE) -f CMakeFiles/segmentv1.dir/build.make CMakeFiles/segmentv1.dir/depend
+	$(MAKE) -f CMakeFiles/segmentv1.dir/build.make CMakeFiles/segmentv1.dir/build
 	$(CMAKE_COMMAND) -E cmake_progress_report "/home/swift/code/ELEC4630_Spencer/segment/HEP-2 segmentation/CMakeFiles"  1
-	@echo "Built target segment"
-.PHONY : CMakeFiles/segment.dir/all
+	@echo "Built target segmentv1"
+.PHONY : CMakeFiles/segmentv1.dir/all
 
 # Include target in all.
-all: CMakeFiles/segment.dir/all
+all: CMakeFiles/segmentv1.dir/all
 .PHONY : all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/segment.dir/rule: cmake_check_build_system
+CMakeFiles/segmentv1.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start "/home/swift/code/ELEC4630_Spencer/segment/HEP-2 segmentation/CMakeFiles" 1
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/segment.dir/all
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/segmentv1.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start "/home/swift/code/ELEC4630_Spencer/segment/HEP-2 segmentation/CMakeFiles" 0
-.PHONY : CMakeFiles/segment.dir/rule
+.PHONY : CMakeFiles/segmentv1.dir/rule
 
 # Convenience name for target.
-segment: CMakeFiles/segment.dir/rule
-.PHONY : segment
+segmentv1: CMakeFiles/segmentv1.dir/rule
+.PHONY : segmentv1
 
 # clean rule for target.
-CMakeFiles/segment.dir/clean:
-	$(MAKE) -f CMakeFiles/segment.dir/build.make CMakeFiles/segment.dir/clean
-.PHONY : CMakeFiles/segment.dir/clean
+CMakeFiles/segmentv1.dir/clean:
+	$(MAKE) -f CMakeFiles/segmentv1.dir/build.make CMakeFiles/segmentv1.dir/clean
+.PHONY : CMakeFiles/segmentv1.dir/clean
 
 # clean rule for target.
-clean: CMakeFiles/segment.dir/clean
+clean: CMakeFiles/segmentv1.dir/clean
 .PHONY : clean
 
 #=============================================================================
