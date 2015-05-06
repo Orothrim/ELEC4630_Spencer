@@ -30,7 +30,7 @@
 #define STRING2 155
 
 //Pixel to mm ratio
-#define RATIO 1.13139
+#define RATIO 0.8
 #define ROOT2 1.41421356237
 
 using namespace cv;
@@ -40,7 +40,7 @@ char input;
 int eleType; 
 double stringLengths[5], stringLength, pixelLengths[15];
 
-double largestArea, area;
+double length = 0;
 
 Mat openElement, closeElement;
 Scalar intenseAvg, color[3], morphAvg;
@@ -51,8 +51,8 @@ Scalar intenseAvg, color[3], morphAvg;
 
 void onMouse(int event, int x, int y, int flags, void* userdata);
 void disImage(char* winName, Mat Image, int Position);
-void thinningIteration(Mat& im, int iter);
-void thinning(Mat& im);
+void zhangSuenIteration(Mat& im, int iter);
+void zhangSuen(Mat& im);
 
 int main(int argc, char** argv) {
 
@@ -107,17 +107,15 @@ int main(int argc, char** argv) {
 			if (DEBUG) {cout << "Variables Created\n\r";}
 
 			//Contrasts and brightens the image.
-			// image.convertTo(contrastImage, -1, 1.5, 10);
-			equalizeHist(image, contrastImage);
+			image.convertTo(contrastImage, -1, 1.5, 10);
+			// equalizeHist(image, contrastImage);
 
 			if (DEBUG) {cout << "Contrast Performed\n\r";}
 
 			//Morphological Gradient, created by subtracting the eroded image from the dilated image.
-			// erode(contrastImage, erodedImage, openElement);
-			// dilate(contrastImage, dilatedImage, openElement);
-			// subtract(dilatedImage, erodedImage, gradImage);
-
-
+			erode(contrastImage, erodedImage, openElement);
+			dilate(contrastImage, dilatedImage, openElement);
+			subtract(dilatedImage, erodedImage, gradImage);
 
 			if (DEBUG) {cout << "Morphological Gradient Image Created\n\r";}
 
@@ -141,35 +139,50 @@ int main(int argc, char** argv) {
 
 			//Skeletonizes the image for analysis.
 			skelImage = openImage.clone();
-			thinning(skelImage);
+			zhangSuen(skelImage);
 
 			if (DEBUG) {cout << "Skeletonization Performed\n\r";}
 
+			countImage = skelImage.clone();
+
 			//Counts the white pixels remaining in the image
-			// pixelLengths[(5*i)+k-6] = countNonZero(skelImage);
-
-			skelImage /= 255;
-
-			for(int j = 1; j < myImage.rows - 1; ++j)
+			countImage /= WHITE;
+			length = 0;
+			for(int j = 0; j < countImage.rows - 1; ++j)
 			{
-				const uchar* previous = myImage.ptr<uchar>(j - 1);
-				const uchar* current  = myImage.ptr<uchar>(j    );
-				const uchar* next     = myImage.ptr<uchar>(j + 1);
 
-				// uchar* output = Result.ptr<uchar>(j);
+				//A pointer to each row of the image being used
+				uchar* previous = countImage.ptr<uchar>(j - 1);
+				uchar* current  = countImage.ptr<uchar>(j);
+				uchar* next = countImage.ptr<uchar>(j + 1);
 
-				for(int l = nChannels; l < nChannels * (myImage.cols - 1); ++l)
+				for(int l = 0; l < countImage.cols - 1; ++l)
 				{
-					if (!(p[j] == 0)) {
-						pixelLengths[(5*i)+k-6]
+					if (!(current[l] == 0)) {
+
+						//Applies the following array to each set pixel in the row, to get the string lengths for that pixel:
+						// [sqrt2 , 1 , sqrt2]
+						// [1     , 0 ,     1]
+						// [sqrt2 , 1 , sqrt2]
+						length += (current[l-1] + current[l+1] + previous[l] + next[l] + ROOT2*previous[l+1] + ROOT2*next[l + 1] + ROOT2*previous[l - 1] + ROOT2*next[l - 1]);
+
+						current[l] = 0;
 					}
 				}
 			}
+
+			pixelLengths[(5*i)+k-6] = length;
+
+			countImage *= WHITE;
+
+			//Sets the length in an array
 			stringLengths[k-1] = pixelLengths[(5*i)+k-6];
 
+			//RATIO was found using the pixel to mm ratio in the first 10 images
 			stringLengths[k-1] = RATIO*stringLengths[k-1];
 			cout << filename << ": " << stringLengths[k-1] << endl;
 
+			//Display Images
 			disImage((char *)"Current Image", originalImage, 1);
 			disImage((char *)"Contrast Image", contrastImage, 2);
 			disImage((char *)"Morphological Gradient Image", gradImage, 3);
@@ -180,6 +193,7 @@ int main(int argc, char** argv) {
 			waitKey(0);
 		}
 
+	//Uses the average of the 5 images to get the string length.
 	stringLength = 0;
 	for (int j = 0; j < 5; j++) {
 		stringLength += stringLengths[j];
@@ -222,41 +236,64 @@ void disImage(char* winName, Mat Image, int Position) {
 
 //Perform one iteration of the Zhang Suen thinning algorithm.
 //Don't call this function directly from your code.
+void zhangSuenIteration(Mat& image, int iteration) {
 
-//@param  im    Binary image with range = 0-1
-//@param  iter  0=even, 1=odd
+	Mat marker = Mat::zeros(image.size(), CV_8UC1);
+	int transitions, setPixels, cond1, cond2;
 
-void thinningIteration(Mat& image, int iter)
-{
-    Mat marker = Mat::zeros(image.size(), CV_8UC1);
+	for (int i = 1; i < image.rows-1; i++) {
 
-    for (int i = 1; i < image.rows-1; i++)
-    {
-        for (int j = 1; j < image.cols-1; j++)
-        {
-            uchar p2 = image.at<uchar>(i-1, j);
-            uchar p3 = image.at<uchar>(i-1, j+1);
-            uchar p4 = image.at<uchar>(i, j+1);
-            uchar p5 = image.at<uchar>(i+1, j+1);
-            uchar p6 = image.at<uchar>(i+1, j);
-            uchar p7 = image.at<uchar>(i+1, j-1);
-            uchar p8 = image.at<uchar>(i, j-1);
-            uchar p9 = image.at<uchar>(i-1, j-1);
+		uchar* previous = image.ptr<uchar>(i - 1);
+		uchar* current  = image.ptr<uchar>(i);
+		uchar* next = image.ptr<uchar>(i + 1);
 
-            int A  = (p2 == 0 && p3 == 1) + (p3 == 0 && p4 == 1) + 
-                     (p4 == 0 && p5 == 1) + (p5 == 0 && p6 == 1) + 
-                     (p6 == 0 && p7 == 1) + (p7 == 0 && p8 == 1) +
-                     (p8 == 0 && p9 == 1) + (p9 == 0 && p2 == 1);
-            int B  = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
-            int m1 = iter == 0 ? (p2 * p4 * p6) : (p2 * p4 * p8);
-            int m2 = iter == 0 ? (p4 * p6 * p8) : (p2 * p6 * p8);
+		for (int j = 1; j < image.cols-1; j++) {
 
-            if (A == 1 && (B >= 2 && B <= 6) && m1 == 0 && m2 == 0)
-                marker.at<uchar>(i,j) = 1;
-        }
-    }
+			//Get the intensities of all of the neibouring pixels
+			uchar p2 = previous[j];
+			uchar p3 = previous[j+1];
+			uchar p4 = current[j+1];
+			uchar p5 = next[j+1];
+			uchar p6 = next[j];
+			uchar p7 = next[j-1];
+			uchar p8 = current[j-1];
+			uchar p9 = previous[j-1];
 
-    image &= ~marker;
+			//Find the number of black to white transitions in the neibouring pixels, in the order, p2-p3-p4-p5-p6-p7-p8-p9-p2
+			transitions  = (p2 == 0 && p3 == 1) + (p3 == 0 && p4 == 1) + (p4 == 0 && p5 == 1) + (p5 == 0 && p6 == 1) + (p6 == 0 && p7 == 1) + (p7 == 0 && p8 == 1) + (p8 == 0 && p9 == 1) + (p9 == 0 && p2 == 1);
+
+			//Count the number of white pixels
+			setPixels = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+
+			//If this is a odd number iteration (first, third, fifth), use p4 and p6 as doublely valuable
+			if (iteration == 0) {
+				cond1 = (p2 * p4 * p6);
+				cond2 = (p4 * p6 * p8);
+			}
+
+			//If this is a odd number iteration (first, third, fifth), use p2 and p8 as doublely valuable
+			else if (iteration == 1) {
+				cond1 = (p2 * p4 * p8);
+				cond2 = (p2 * p6 * p8);
+			}
+
+			//Checks the 5 conditions required for the Zhang Suen algorithm:
+			//Only 1 transition occurs from black to white
+			//Between 2 and 6 white pixels are neibouring the current pixel
+			//For odd number of the iterations
+			//One or more of P2, P4, and P6 are white
+			//One or more of P4, P6, and P8 are white
+			//For even number of the iterations
+			//One or more of P2, P4, and P8 are white
+			//One or more of P2, P6, and P8 are white
+			if (transitions == 1 && (setPixels>= 2 && setPixels<= 6) && cond1 == 0 && cond2 == 0) {
+				marker.at<uchar>(i,j) = 1;
+			}
+		}
+	}
+
+	//Set the selected pixels to black
+	image &= ~marker;
 }
 
 /**
@@ -264,20 +301,20 @@ void thinningIteration(Mat& image, int iter)
  *
  * @param  im  Binary image with range = 0-WHITE
  */
-void thinning(Mat& im)
+void zhangSuen(Mat& im)
 {
-    im /= WHITE;
+	im /= WHITE;
 
-    Mat prev = Mat::zeros(im.size(), CV_8UC1);
-    Mat diff;
+	Mat prev = Mat::zeros(im.size(), CV_8UC1);
+	Mat diff;
 
-    do {
-        thinningIteration(im, 0);
-        thinningIteration(im, 1);
-        absdiff(im, prev, diff);
-        im.copyTo(prev);
-    } 
-    while (countNonZero(diff) > 0);
+	do {
+		zhangSuenIteration(im, 0);
+		zhangSuenIteration(im, 1);
+		absdiff(im, prev, diff);
+		im.copyTo(prev);
+	}
+	while (countNonZero(diff) > 0);
 
-    im *= WHITE;
+	im *= WHITE;
 }
