@@ -67,9 +67,6 @@ Mat openElement, closeElement;
 Rect bRect;
 Scalar intenseAvg, color[3];
 
-vector<vector<Point> > contours;
-vector<Vec4i> hierarchy;
-vector<Vec3f> circles;
 uchar* p;
 uchar* q;
 //uchar* eleType;
@@ -140,6 +137,7 @@ int main(int argc, char** argv) {
 
 		// grayImage = imread(filename, 0);
 		threshold(image, threshImage, intenseAvg[0]*1.2, 255, THRESH_BINARY);
+		// threshold(image, threshImage, 0, 255, THRESH_BINARY | THRESH_OTSU);
 
 		erode(threshImage, erodedImage, openElement);
 		dilate(erodedImage, resultImage, openElement);

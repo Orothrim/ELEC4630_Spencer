@@ -11,9 +11,9 @@
 #define DEBUG 0
 
 //Used for element creation.
-#define ELEMENT_TYPE 0
+#define ELEMENT_TYPE 2
 #define OPENING_SIZE 1
-#define CLOSING_SIZE 3
+#define CLOSING_SIZE 1
 
 //Used to access all of the images.
 #define ONESCOLUMN 6
@@ -30,7 +30,7 @@
 #define STRING2 155
 
 //Pixel to mm ratio
-#define RATIO 0.7
+#define RATIO 0.8
 #define ROOT2 1.41421356237
 
 using namespace cv;
@@ -49,6 +49,7 @@ Scalar intenseAvg, color[3], morphAvg;
 
 //Function Prototypes
 
+void onMouse(int event, int x, int y, int flags, void* userdata);
 void disImage(char* winName, Mat Image, int Position);
 void zhangSuenIteration(Mat& im, int iter);
 void zhangSuen(Mat& im);
@@ -64,7 +65,7 @@ int main(int argc, char** argv) {
 		else if( ELEMENT_TYPE == 2) { eleType = MORPH_ELLIPSE; }
 
 		//These are the elements using for opening and closing, through erosion and dilation.
-		openElement = getStructuringElement(eleType , Size( OPENING_SIZE+1, OPENING_SIZE+1 ), Point(OPENING_SIZE, OPENING_SIZE));
+		openElement = getStructuringElement(eleType , Size( 2*OPENING_SIZE+1, 2*OPENING_SIZE+1 ), Point(OPENING_SIZE, OPENING_SIZE));
 		closeElement = getStructuringElement(eleType , Size( 2*CLOSING_SIZE+1, 2*CLOSING_SIZE+1 ), Point(CLOSING_SIZE, CLOSING_SIZE));
 
 	//This for loop is used to go through the different strings.
@@ -100,48 +101,44 @@ int main(int argc, char** argv) {
 
 			//Creates the image variables used for this project, one is used for each step
 			//to facilitate debugging and understanding the code.
-			Mat image = originalImage.clone(), threshImage, erodedImage, resultImage, openImage, closeImage, compareImage, contrastImage, gradImage, dilatedImage, skelImage, countImage, botImage;
+			Mat image = originalImage.clone(), threshImage, erodedImage, resultImage, openImage, closeImage, compareImage, contrastImage, gradImage, dilatedImage, skelImage, countImage;
 			Mat countArray = (Mat_<double>(3,3) << ROOT2, 1, ROOT2, 1, 0, 1, ROOT2, 1, ROOT2);
 
 			if (DEBUG) {cout << "Variables Created\n\r";}
 
 			//Contrasts and brightens the image.
-			// image.convertTo(contrastImage, -1, 1.5, 10);
-			equalizeHist(image, contrastImage);
+			image.convertTo(contrastImage, -1, 1.5, 10);
+			// equalizeHist(image, contrastImage);
 
 			if (DEBUG) {cout << "Contrast Performed\n\r";}
 
 			//Morphological Gradient, created by subtracting the eroded image from the dilated image.
-			// erode(contrastImage, erodedImage, openElement);
-			// dilate(contrastImage, dilatedImage, openElement);
-			// subtract(dilatedImage, erodedImage, gradImage);
+			erode(contrastImage, erodedImage, openElement);
+			dilate(contrastImage, dilatedImage, openElement);
+			subtract(dilatedImage, erodedImage, gradImage);
 
-			dilate(contrastImage, dilatedImage, closeElement);
+			if (DEBUG) {cout << "Morphological Gradient Image Created\n\r";}
+
+			//Thresholding is performed to differentiate the background from the string.
+			intenseAvg = mean(gradImage);
+			threshold(gradImage, threshImage, intenseAvg[0]*5, WHITE, THRESH_BINARY);
+
+			if (DEBUG) {cout << "Thresholding Performed\n\r";}
+
+			//Performs closing on the image, this is done before opening in order to remove small holes in the string.
+			dilate(threshImage, dilatedImage, closeElement);
 			erode(dilatedImage, closeImage, closeElement);
-			subtract(closeImage, contrastImage, botImage);
 
 			if (DEBUG) {cout << "Opening Performed\n\r";}
 
 			//Performs opening on the image, in order to remove noise from the image.
-			// erode(botImage, erodedImage, openElement);
-			// dilate(erodedImage, openImage, openElement);
+			erode(closeImage, erodedImage, openElement);
+			dilate(erodedImage, openImage, openElement);
 
-			if (DEBUG) {cout << "Bottom Hat Image Created\n\r";}
-
-			//Thresholding is performed to differentiate the background from the string.
-			intenseAvg = mean(botImage);
-			threshold(botImage, threshImage, 0, WHITE, THRESH_BINARY | THRESH_OTSU);
-
-			if (DEBUG) {cout << "Thresholding Performed\n\r";}
-
-			// //Performs closing on the image, this is done before opening in order to remove small holes in the string.
-			// dilate(threshImage, dilatedImage, closeElement);
-			// erode(dilatedImage, closeImage, closeElement);
-
-			// if (DEBUG) {cout << "Closing Performed\n\r";}
+			if (DEBUG) {cout << "Closing Performed\n\r";}
 
 			//Skeletonizes the image for analysis.
-			skelImage = threshImage.clone();
+			skelImage = openImage.clone();
 			zhangSuen(skelImage);
 
 			if (DEBUG) {cout << "Skeletonization Performed\n\r";}
@@ -188,9 +185,9 @@ int main(int argc, char** argv) {
 			//Display Images
 			disImage((char *)"Current Image", originalImage, 1);
 			disImage((char *)"Contrast Image", contrastImage, 2);
-			disImage((char *)"Bottom Hat Image", botImage, 3);
+			disImage((char *)"Morphological Gradient Image", gradImage, 3);
 			disImage((char *)"Thresh Image", threshImage, 4);
-			// disImage((char *)"Opened Image", openImage, 5);
+			disImage((char *)"Opened Image", openImage, 5);
 			disImage((char *)"Skeletonized Image", skelImage, 6);
 
 			waitKey(0);
