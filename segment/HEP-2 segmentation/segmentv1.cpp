@@ -10,14 +10,6 @@
 
 #define DEBUG 1
 
-#define OPEN_CLOSE 1 //1 uses and opening procedure, 0 uses a closing procedure.
-#define YUV_RGB 0 //1 = YUV, 0 = RGB.
-
-//Canny edge detection threshold, it is quite low due to the low 
-//brightness of the images.
-#define THRESH 60
-#define AREA_THRESH 100
-
 #define ELEMENT_TYPE 0
 #define OPENING_SIZE 5
 #define CLOSING_SIZE 3
@@ -27,10 +19,6 @@
 #define TENSCOLUMN 5
 #define NUMIMAGES 16
 
-//Middle point of images.
-#define MIDDLEX 292
-#define MIDDLEY 360
-
 //Colours used in image analysis.
 #define WHITE 255
 #define MANICOLOUR 127
@@ -38,66 +26,18 @@
 //Size of the images when displayed.
 #define WINDOWX 533
 #define WINDOWY 400
-//First of four image positions.
-#define FIRSTPOSX 0
-#define FIRSTPOSY 0
-//Second of four image positions.
-#define SECONDPOSX WINDOWX+5
-#define SECONDPOSY 0
-//Third of four image positions.
-#define THIRDPOSX 0
-#define THIRDPOSY WINDOWY+25
-//Fourth of four image positions.
-#define FOURTHPOSX WINDOWX+5
-#define FOURTHPOSY WINDOWY+25
-
 
 using namespace cv;
 using namespace std;
 
-Point brightLoc, mousePos;
-
-char input;
-int cnt = 0, brightness = 0, contourIndex = 0, intense, eleType;
+int eleType;
 double diffCount, percentDiff;
 
-double largestArea, area;
-
 Mat openElement, closeElement;
-Rect bRect;
-Scalar intenseAvg, color[3];
-
-uchar* p;
-uchar* q;
-//uchar* eleType;
+Scalar intenseAvg;
 
 //Function Prototypes
-void onMouse(int event, int x, int y, int flags, void* userdata);
 void disImage(char* winName, Mat Image, int Position);
-int write(char message[10]);
-
-////////////////////////////
-// FUNCTION SUCCESS RATE	//
-//			1_fitc.tif				//
-//			File Loaded				//
-//			0.0146558					//
-//			2_fitc.tif				//
-//			File Loaded				//
-//			0.0339746					//
-//			3_fitc.tif				//
-//			File Loaded				//
-//			0.0389354					//
-//			4_fitc.tif				//
-//			File Loaded				//
-//			0.0204008					//
-//			5_fitc.tif				//
-//			File Loaded				//
-//			0.295463					//
-//			6_fitc.tif				//
-//			File Loaded				//
-//			0.161916					//
-//												//
-////////////////////////////
 
 int main(int argc, char** argv) {
 
@@ -120,7 +60,7 @@ int main(int argc, char** argv) {
 			cout << "can not open " << filename << endl;
 			return -1;
 		}
-		if (DEBUG) {cout << "File Loaded\n\r";}
+		// if (DEBUG) {cout << "File Loaded\n\r";}
 
 	  if( ELEMENT_TYPE == 0 ){ eleType = MORPH_RECT; }
 	  else if( ELEMENT_TYPE == 1 ){ eleType = MORPH_CROSS; }
@@ -167,36 +107,25 @@ void disImage(char* winName, Mat Image, int Position) {
 	namedWindow(winName, WINDOW_NORMAL);
 	imshow(winName, Image);
 	resizeWindow(winName, WINDOWX, WINDOWY);
+
 	switch (Position) {
 		case 1:
-			moveWindow(winName, FIRSTPOSX, FIRSTPOSY);
+			moveWindow(winName, 0, 0);
 			break;
 		case 2:
-			moveWindow(winName, SECONDPOSX, SECONDPOSY);
+			moveWindow(winName, WINDOWX+5, 0);
 			break;
 		case 3:
-			moveWindow(winName, THIRDPOSX, THIRDPOSY);
+			moveWindow(winName, (WINDOWX*2)+10, 0);
 			break;
 		case 4:
-			moveWindow(winName, FOURTHPOSX, FOURTHPOSY);
+			moveWindow(winName, 0, WINDOWY+25);
+			break;
+		case 5:
+			moveWindow(winName, WINDOWX+5, WINDOWY+25);
+			break;
+		case 6:
+			moveWindow(winName, (WINDOWX*2)+10, WINDOWY+25);
 			break;
 	}
-	
 }
-
-void onMouse(int event, int x, int y, int flags, void* userdata) {
-	//Event that is attached to a mouse click after "setMouseCallback" occurs.
-	if(event == EVENT_LBUTTONDOWN) {
-		mousePos.x = x;
-		mousePos.y = y;
-	}
-}
-
-// int write(char message[10]) {
-// 	int n_written = 0, spot = 0;
-
-// 	do {
-// 		n_written = write( USB, &message[spot], 1 );
-// 		spot += n_written;
-// 	} while (message[spot-1] != '\r' && n_written > 0);
-// }

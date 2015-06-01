@@ -7,6 +7,8 @@
 #include <fcntl.h>      // File control definitions
 #include <errno.h>      // Error number definitions
 #include <termios.h>    // POSIX terminal control definitions
+#include "/home/swift/code/customfunctions/DisplayFrames.h"
+#include "/home/swift/code/customfunctions/ZhangSuenFunctions.h"
 
 #define DEBUG 0
 
@@ -24,8 +26,8 @@
 #define WHITE 255
 
 //Size of the images when displayed.
-#define WINDOWX 533
-#define WINDOWY 400
+// #define WINDOWX 533
+// #define WINDOWY 400
 #define STRING1 130
 #define STRING2 155
 
@@ -37,7 +39,7 @@ using namespace cv;
 using namespace std;
 
 char input;
-int eleType; 
+int eleType;
 double stringLengths[5], stringLength, pixelLengths[15];
 
 double length = 0;
@@ -46,12 +48,6 @@ Mat openElement, closeElement;
 Scalar intenseAvg, color[3], morphAvg;
 
 
-
-//Function Prototypes
-
-void disImage(char* winName, Mat Image, int Position);
-void zhangSuenIteration(Mat& im, int iter);
-void zhangSuen(Mat& im);
 
 int main(int argc, char** argv) {
 
@@ -111,20 +107,10 @@ int main(int argc, char** argv) {
 
 			if (DEBUG) {cout << "Contrast Performed\n\r";}
 
-			//Morphological Gradient, created by subtracting the eroded image from the dilated image.
-			// erode(contrastImage, erodedImage, openElement);
-			// dilate(contrastImage, dilatedImage, openElement);
-			// subtract(dilatedImage, erodedImage, gradImage);
-
+			//Performs a bottom hat operation, or a black-top hat operation.
 			dilate(contrastImage, dilatedImage, closeElement);
 			erode(dilatedImage, closeImage, closeElement);
 			subtract(closeImage, contrastImage, botImage);
-
-			if (DEBUG) {cout << "Opening Performed\n\r";}
-
-			//Performs opening on the image, in order to remove noise from the image.
-			// erode(botImage, erodedImage, openElement);
-			// dilate(erodedImage, openImage, openElement);
 
 			if (DEBUG) {cout << "Bottom Hat Image Created\n\r";}
 
@@ -134,12 +120,6 @@ int main(int argc, char** argv) {
 
 			if (DEBUG) {cout << "Thresholding Performed\n\r";}
 
-			// //Performs closing on the image, this is done before opening in order to remove small holes in the string.
-			// dilate(threshImage, dilatedImage, closeElement);
-			// erode(dilatedImage, closeImage, closeElement);
-
-			// if (DEBUG) {cout << "Closing Performed\n\r";}
-
 			//Skeletonizes the image for analysis.
 			skelImage = threshImage.clone();
 			zhangSuen(skelImage);
@@ -147,6 +127,8 @@ int main(int argc, char** argv) {
 			if (DEBUG) {cout << "Skeletonization Performed\n\r";}
 
 			countImage = skelImage.clone();
+
+			cout << countNonZero(skelImage) << endl;
 
 			//Counts the white pixels remaining in the image
 			countImage /= WHITE;
@@ -182,15 +164,14 @@ int main(int argc, char** argv) {
 			stringLengths[k-1] = pixelLengths[(5*i)+k-6];
 
 			//RATIO was found using the pixel to mm ratio in the first 10 images
-			stringLengths[k-1] = RATIO*stringLengths[k-1];
+			//stringLengths[k-1] = RATIO*stringLengths[k-1];
 			cout << filename << ": " << stringLengths[k-1] << endl;
 
 			//Display Images
 			disImage((char *)"Current Image", originalImage, 1);
 			disImage((char *)"Contrast Image", contrastImage, 2);
-			disImage((char *)"Bottom Hat Image", botImage, 3);
-			disImage((char *)"Thresh Image", threshImage, 4);
-			// disImage((char *)"Opened Image", openImage, 5);
+			disImage((char *)"Bottom Hat Image", botImage, 4);
+			disImage((char *)"Thresh Image", threshImage, 5);
 			disImage((char *)"Skeletonized Image", skelImage, 6);
 
 			waitKey(0);
@@ -207,117 +188,4 @@ int main(int argc, char** argv) {
 	waitKey(0);
 
 	}
-}
-
-void disImage(char* winName, Mat Image, int Position) {
-	namedWindow(winName, WINDOW_NORMAL);
-	imshow(winName, Image);
-	resizeWindow(winName, WINDOWX, WINDOWY);
-
-	switch (Position) {
-		case 1:
-			moveWindow(winName, 0, 0);
-			break;
-		case 2:
-			moveWindow(winName, WINDOWX+5, 0);
-			break;
-		case 3:
-			moveWindow(winName, (WINDOWX*2)+10, 0);
-			break;
-		case 4:
-			moveWindow(winName, 0, WINDOWY+25);
-			break;
-		case 5:
-			moveWindow(winName, WINDOWX+5, WINDOWY+25);
-			break;
-		case 6:
-			moveWindow(winName, (WINDOWX*2)+10, WINDOWY+25);
-			break;
-	}
-}
-
-
-//Perform one iteration of the Zhang Suen thinning algorithm.
-//Don't call this function directly from your code.
-void zhangSuenIteration(Mat& image, int iteration) {
-
-	Mat marker = Mat::zeros(image.size(), CV_8UC1);
-	int transitions, setPixels, cond1, cond2;
-
-	for (int i = 1; i < image.rows-1; i++) {
-
-		uchar* previous = image.ptr<uchar>(i - 1);
-		uchar* current  = image.ptr<uchar>(i);
-		uchar* next = image.ptr<uchar>(i + 1);
-
-		for (int j = 1; j < image.cols-1; j++) {
-
-			//Get the intensities of all of the neibouring pixels
-			uchar p2 = previous[j];
-			uchar p3 = previous[j+1];
-			uchar p4 = current[j+1];
-			uchar p5 = next[j+1];
-			uchar p6 = next[j];
-			uchar p7 = next[j-1];
-			uchar p8 = current[j-1];
-			uchar p9 = previous[j-1];
-
-			//Find the number of black to white transitions in the neibouring pixels, in the order, p2-p3-p4-p5-p6-p7-p8-p9-p2
-			transitions  = (p2 == 0 && p3 == 1) + (p3 == 0 && p4 == 1) + (p4 == 0 && p5 == 1) + (p5 == 0 && p6 == 1) + (p6 == 0 && p7 == 1) + (p7 == 0 && p8 == 1) + (p8 == 0 && p9 == 1) + (p9 == 0 && p2 == 1);
-
-			//Count the number of white pixels
-			setPixels = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
-
-			//If this is a odd number iteration (first, third, fifth), use p4 and p6 as doublely valuable
-			if (iteration == 0) {
-				cond1 = (p2 * p4 * p6);
-				cond2 = (p4 * p6 * p8);
-			}
-
-			//If this is a odd number iteration (first, third, fifth), use p2 and p8 as doublely valuable
-			else if (iteration == 1) {
-				cond1 = (p2 * p4 * p8);
-				cond2 = (p2 * p6 * p8);
-			}
-
-			//Checks the 5 conditions required for the Zhang Suen algorithm:
-			//Only 1 transition occurs from black to white
-			//Between 2 and 6 white pixels are neibouring the current pixel
-			//For odd number of the iterations
-			//One or more of P2, P4, and P6 are white
-			//One or more of P4, P6, and P8 are white
-			//For even number of the iterations
-			//One or more of P2, P4, and P8 are white
-			//One or more of P2, P6, and P8 are white
-			if (transitions == 1 && (setPixels>= 2 && setPixels<= 6) && cond1 == 0 && cond2 == 0) {
-				marker.at<uchar>(i,j) = 1;
-			}
-		}
-	}
-
-	//Set the selected pixels to black
-	image &= ~marker;
-}
-
-/**
- * Function for thinning the given binary image
- *
- * @param  im  Binary image with range = 0-WHITE
- */
-void zhangSuen(Mat& im)
-{
-	im /= WHITE;
-
-	Mat prev = Mat::zeros(im.size(), CV_8UC1);
-	Mat diff;
-
-	do {
-		zhangSuenIteration(im, 0);
-		zhangSuenIteration(im, 1);
-		absdiff(im, prev, diff);
-		im.copyTo(prev);
-	}
-	while (countNonZero(diff) > 0);
-
-	im *= WHITE;
 }

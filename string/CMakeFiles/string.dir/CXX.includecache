@@ -25,6 +25,10 @@ errno.h
 -
 termios.h
 -
+DisplayFrames.h
+/home/swift/code/ELEC4630_Spencer/string/DisplayFrames.h
+ZhangSuenFunctions.h
+/home/swift/code/ELEC4630_Spencer/string/ZhangSuenFunctions.h
 
 /usr/local/include/opencv2/core/core.hpp
 opencv2/core/types_c.h

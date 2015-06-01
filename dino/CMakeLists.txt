@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project( dinoCode )
+find_package( OpenCV REQUIRED )
+add_executable( dinoCode dinoCode.cpp )
+target_link_libraries( dinoCode ${OpenCV_LIBS} )
